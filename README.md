@@ -14,6 +14,23 @@ management, and [PyTest](https://docs.pytest.org/en/latest/contents.html) for te
 If you have [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) installed, you can
 easily run the following to get a local env setup quickly.
 
+First, make sure to create a [`.env`](https://docs.docker.com/compose/environment-variables/#the-env-file) file in the root of this repo (it has been `.gitignore`d so don't worry about accidentally staging it).
+
+Therein, fill out the following information:
+
+```sh
+REDSHIFT_HOST='<your-host-name>' # Most likely 'localhost'
+REDSHIFT_DATABASE='<your-db-name>' # Most likely 'dev'
+REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
+REDSHIFT_PORT='<your-port>' # Probably 5439
+REDSHIFT_USERNAME='<your-user-name'
+REDSHIFT_PASSWORD='<your-password>'
+TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
+TARGET_S3_AWS_SECRET_ACCESS_KEY='<secret>'
+TARGET_S3_BUCKET='<bucket-string>'
+TARGET_S3_KEY_PREFIX='<some-string>' # We use 'target_redshift_test'
+```
+
 ```sh
 $ docker-compose up -d --build
 $ docker logs -tf target-redshift_target-redshift_1 # You container names might differ
@@ -29,16 +46,30 @@ See the [PyTest](#pytest) commands below!
 
 ### DB
 
-To run the tests, you will need a PostgreSQL 8.0.2 server running. Better yet is to have an _actual_ Redshift cluster running!
-
-***NOTE:*** Testing assumes that you've exposed the traditional port `5432`.
+To run the tests, you will need an _actual_ Redshift cluster running.
 
 Make sure to set the following env vars for [PyTest](#pytest):
 
 ```sh
 $ EXPORT REDSHIFT_HOST='<your-host-name>' # Most likely 'localhost'
-$ EXPORT REDSHIFT_DB='<your-db-name>'     # We use 'target_redshift_test'
-$ EXPORT REDSHIFT_USER='<your-user-name'  # Probably just 'postgres', make sure this user has no auth
+$ EXPORT REDSHIFT_DATABASE='<your-db-name>' # Most likely 'dev'
+$ EXPORT REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
+$ EXPORT REDSHIFT_PORT='<your-port>' # Probably 5439
+$ EXPORT REDSHIFT_USERNAME='<your-user-name'
+$ EXPORT REDSHIFT_PASSWORD='<your-password>' # Redshift requires passwords
+```
+
+### S3
+
+To run the tests, you will need an _actual_ S3 bucket available.
+
+Make sure to set the following env vars for [PyTest](#pytest):
+
+```sh
+$ EXPORT TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
+$ EXPORT TARGET_S3_AWS_SECRET_ACCESS_KEY='<secret>'
+$ EXPORT TARGET_S3_BUCKET='<bucket-string>'
+$ EXPORT TARGET_S3_KEY_PREFIX='<some-string>' # We use 'target_redshift_test'
 ```
 
 ### PyTest

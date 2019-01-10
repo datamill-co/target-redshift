@@ -1,20 +1,20 @@
 version: '2'
 services:
-  db:
-    image: foundryai/postgres8:8.0.2
-    environment:
-      POSTGRES_USER: target_redshift
-      POSTGRES_DB: target_redshift_test
-    ports:
-      - "5432:5432"
-
   target-redshift:
     build:
       context: .
       dockerfile: ./Dockerfile
     environment:
-      REDSHIFT_HOST: 'db'
-      REDSHIFT_DATABASE: 'target_redshift_test'
-      REDSHIFT_USERNAME: 'target_redshift'
+      REDSHIFT_HOST: "${REDSHIFT_HOST}"
+      REDSHIFT_DATABASE: "${REDSHIFT_DATABASE}"
+      REDSHIFT_SCHEMA: "${REDSHIFT_SCHEMA}"
+      REDSHIFT_PORT: "${REDSHIFT_PORT}"
+      REDSHIFT_USERNAME: "${REDSHIFT_USERNAME}"
+      REDSHIFT_PASSWORD: "${REDSHIFT_PASSWORD}"
+      TARGET_S3_AWS_ACCESS_KEY_ID: "${TARGET_S3_AWS_ACCESS_KEY_ID}"
+      TARGET_S3_AWS_SECRET_ACCESS_KEY: "${TARGET_S3_AWS_SECRET_ACCESS_KEY}"
+      TARGET_S3_BUCKET: "${TARGET_S3_BUCKET}"
+      TARGET_S3_KEY_PREFIX: "${TARGET_S3_KEY_PREFIX}"
+
     volumes:
       - .:/code

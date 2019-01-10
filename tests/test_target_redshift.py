@@ -7,16 +7,13 @@ import psycopg2.extras
 import pytest
 
 from fixtures import CatStream, CONFIG, db_cleanup, MultiTypeStream, NestedStream, TEST_DB
-from singer_target_postgres import json_schema
-from singer_target_postgres import postgres
-from singer_target_postgres import singer_stream
-from singer_target_postgres import main
-from singer_target_postgres.target_tools import TargetError
+from target_postgres import json_schema
+from target_postgres import postgres
+from target_postgres import singer_stream
+from target_postgres.target_tools import TargetError
 
+from target_redshift import main
 
-## TODO: create and test more fake streams
-## TODO: test invalid data against JSON Schema
-## TODO: test compound pk
 
 def assert_columns_equal(cursor, table_name, expected_column_tuples):
     cursor.execute("SELECT column_name, data_type, is_nullable FROM information_schema.columns " + \

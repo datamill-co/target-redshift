@@ -5,39 +5,17 @@ workflows:
   test:
     jobs:
       - cache
-      - test--8.0.2:
+      - test--redshift:
           requires:
             - cache
 
 cache: &cache
-  deps-v0-{{ checksum "setup.py" }}
+         deps-v0-{{ checksum "setup.py" }}
 
 restore__cache: &restore__cache
   restore_cache:
     keys:
       - *cache
-
-test__base: &test__base
-  working_directory: /code/
-  steps:
-    - checkout
-    - *restore__cache
-    - attach_workspace:
-        at: "./"
-
-    - run:
-        name: Run Tests
-        command: |
-          source venv--target-redshift/bin/activate
-          python setup.py pytest --verbose
-        environment:
-          REDSHIFT_HOST: 'localhost'
-          REDSHIFT_DATABASE: 'target_redshift_test'
-          REDSHIFT_USERNAME: 'target_redshift'
-
-    - store_artifacts:
-        path: target/test-results
-        destination: raw-test-output
 
 jobs:
   cache:
@@ -68,11 +46,36 @@ jobs:
           paths:
             - "./venv--target-redshift"
 
-  test--8.0.2:
-    <<: *test__base
+  test--redshift:
     docker:
       - image: python:3.7.1-stretch
-      - image: foundryai/postgres8:8.0.2
-        environment:
-          POSTGRES_DB: target_redshift_test
-          POSTGRES_USER: target_redshift
+    working_directory: /code/
+    steps:
+      - checkout
+      - *restore__cache
+      - attach_workspace:
+          at: "./"
+      - run:
+          name: Run Tests
+          command: |
+            source venv--target-redshift/bin/activate
+            ## To avoid collision with other running tests
+            export TARGET_S3_KEY_PREFIX=circleci_target_redshift_test_`date +%s`
+            export REDSHIFT_SCHEMA=circleci_target_redshift_test_`date +%s`
+
+            python setup.py pytest --verbose
+          environment:
+            REDSHIFT_PORT: 5439
+            TARGET_S3_BUCKET: 'test-target-redshift'
+            ## Specifier in the project envvars in CCI
+            #   environment:
+            #     REDSHIFT_HOST='<your-host-name>' # Most likely 'localhost'
+            #     REDSHIFT_DATABASE='<your-db-name>'     # We use 'target_redshift_test'
+            #     REDSHIFT_USERNAME='<your-user-name'
+            #     REDSHIFT_PASSWORD='<your-password>'
+            #     TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
+            #     TARGET_S3_AWS_SECRECT_ACCESS_KEY='<secret>'
+
+      - store_artifacts:
+          path: target/test-results
+          destination: raw-test-output

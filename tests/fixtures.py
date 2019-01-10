@@ -10,15 +10,25 @@ from chance import chance
 
 CONFIG = {
     'redshift_host': os.environ['REDSHIFT_HOST'],
+    'redshift_port': os.environ['REDSHIFT_PORT'],
     'redshift_database': os.environ['REDSHIFT_DATABASE'],
     'redshift_username': os.environ['REDSHIFT_USERNAME'],
+    'redshift_password': os.environ['REDSHIFT_PASSWORD'],
+    'redshift_schema': os.environ['REDSHIFT_SCHEMA'],
+    'target_s3':
+        {'aws_access_key_id': os.environ['TARGET_S3_AWS_ACCESS_KEY_ID'],
+         'aws_secret_access_key': os.environ['TARGET_S3_AWS_SECRET_ACCESS_KEY'],
+         'bucket': os.environ['TARGET_S3_BUCKET'],
+         'key_prefix': os.environ['TARGET_S3_KEY_PREFIX']},
     'disable_collection': True
 }
 
 TEST_DB = {
     'host': CONFIG['redshift_host'],
+    'port': CONFIG['redshift_port'],
     'dbname': CONFIG['redshift_database'],
-    'user': CONFIG['redshift_username']
+    'user': CONFIG['redshift_username'],
+    'password': CONFIG['redshift_password'],
 }
 
 fake = Faker()
