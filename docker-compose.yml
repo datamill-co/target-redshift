@@ -1,0 +1,20 @@
+version: '2'
+services:
+  db:
+    image: foundryai/postgres8:8.0.2
+    environment:
+      POSTGRES_USER: target_redshift
+      POSTGRES_DB: target_redshift_test
+    ports:
+      - "5432:5432"
+
+  target-redshift:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    environment:
+      REDSHIFT_HOST: 'db'
+      REDSHIFT_DATABASE: 'target_redshift_test'
+      REDSHIFT_USERNAME: 'target_redshift'
+    volumes:
+      - .:/code

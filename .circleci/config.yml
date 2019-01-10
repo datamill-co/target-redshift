@@ -1,0 +1,78 @@
+version: 2.0
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - cache
+      - test--8.0.2:
+          requires:
+            - cache
+
+cache: &cache
+  deps-v0-{{ checksum "setup.py" }}
+
+restore__cache: &restore__cache
+  restore_cache:
+    keys:
+      - *cache
+
+test__base: &test__base
+  working_directory: /code/
+  steps:
+    - checkout
+    - *restore__cache
+    - attach_workspace:
+        at: "./"
+
+    - run:
+        name: Run Tests
+        command: |
+          source venv--target-redshift/bin/activate
+          python setup.py pytest --verbose
+        environment:
+          REDSHIFT_HOST: 'localhost'
+          REDSHIFT_DATABASE: 'target_redshift_test'
+          REDSHIFT_USERNAME: 'target_redshift'
+
+    - store_artifacts:
+        path: target/test-results
+        destination: raw-test-output
+
+jobs:
+  cache:
+    working_directory: /code/
+    docker:
+      - image: python:3.7.1-stretch
+    steps:
+      - checkout
+      - *restore__cache
+
+      - run:
+          name: Install target-redshift
+          command: |
+            python -m venv venv--target-redshift
+            source venv--target-redshift/bin/activate
+            python setup.py install
+            deactivate
+
+      - save_cache:
+          key: *cache
+          paths:
+            - "./venv--target-redshift"
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.7/site-packages"
+
+      - persist_to_workspace:
+          root: "./"
+          paths:
+            - "./venv--target-redshift"
+
+  test--8.0.2:
+    <<: *test__base
+    docker:
+      - image: python:3.7.1-stretch
+      - image: foundryai/postgres8:8.0.2
+        environment:
+          POSTGRES_DB: target_redshift_test
+          POSTGRES_USER: target_redshift
