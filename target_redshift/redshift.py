@@ -1,7 +1,5 @@
 import re
-import uuid
 
-import boto3
 from psycopg2 import sql
 from target_postgres import json_schema
 from target_postgres.postgres import PostgresError, PostgresTarget
@@ -10,29 +8,13 @@ from target_postgres.singer_stream import (
 )
 from target_postgres.sql_base import SEPARATOR
 
+from target_redshift import s3
+
 
 class RedshiftError(PostgresError):
     """
     Raise this when there is an error with regards to Redshift streaming
     """
-
-
-class _BinaryCSV(object):
-    def __init__(self, csv_rows):
-        self.csv_rows = csv_rows
-
-    def read(self, *args, **kwargs):
-        if len(args) > 0:
-            max_bytes = args[0]
-        else:
-            max_bytes = None
-        output = b''
-        while (max_bytes is not None and len(output) < max_bytes) or True:  ## TODO: overflow?
-            line = self.csv_rows.read()
-            if line == '':
-                return output
-            output += line.encode('utf-8')
-        return output
 
 
 class RedshiftTarget(PostgresTarget):
@@ -44,10 +26,11 @@ class RedshiftTarget(PostgresTarget):
 
     def __init__(self, connection, *args, redshift_schema='public', **kwargs):
         self.LOGGER.info(
-            'RedshiftTarget created with established connection: `{}`, PostgreSQL schema: `{}`'.format(connection.dsn,
-                                                                                                       redshift_schema))
+            'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
+                                                                                            redshift_schema))
 
-        PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema)
+        self.conn = connection
+        self.postgres_schema = redshift_schema
 
     def sql_type_to_json_schema(self, sql_type, is_nullable):
         if sql_type == 'character varying':
@@ -78,23 +61,14 @@ class RedshiftTarget(PostgresTarget):
                          temp_table_name,
                          columns,
                          csv_rows):
-        s3_client = boto3.client(
-            's3',
-            aws_access_key_id=self.s3_config.get('aws_access_key_id'),
-            aws_secret_access_key=self.s3_config.get('aws_secret_access_key'))
+        key_prefix = self.s3_config.get('key_prefix', '') + temp_table_name + SEPARATOR
 
-        bucket = self.s3_config.get('bucket')
-        if not bucket:
-            raise RedshiftError('`target_s3.bucket` required')
-        prefix = self.s3_config.get('key_prefix', '')
-        key = prefix + temp_table_name + SEPARATOR + str(uuid.uuid4()).replace('-', '')
-
-        s3_client.upload_fileobj(
-            _BinaryCSV(csv_rows),
-            bucket,
-            key)
+        bucket, key = s3.persist(self.s3_config,
+                                 csv_rows,
+                                 key_prefix=key_prefix)
 
         source = 's3://{}/{}'.format(bucket, key)
+
         credentials = 'aws_access_key_id={};aws_secret_access_key={}'.format(
             self.s3_config.get('aws_access_key_id'),
             self.s3_config.get('aws_secret_access_key'))
