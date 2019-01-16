@@ -3,7 +3,7 @@ import re
 
 from psycopg2 import sql
 from target_postgres import json_schema
-from target_postgres.postgres import PostgresError, PostgresTarget
+from target_postgres.postgres import PostgresError, PostgresTarget, RESERVED_NULL_DEFAULT
 from target_postgres.singer_stream import (
     SINGER_LEVEL
 )
@@ -117,26 +117,27 @@ class RedshiftTarget(PostgresTarget):
         bucket, key = self.s3.persist(csv_rows,
                                       key_prefix=key_prefix)
 
-        source = 's3://{}/{}'.format(bucket, key)
+        credentials = self.s3.credentials()
 
-        credentials = 'aws_access_key_id={};aws_secret_access_key={}'.format(
-            self.s3_config.get('aws_access_key_id'),
-            self.s3_config.get('aws_secret_access_key'))
-
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV').format(
+        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
-            sql.Literal(source),
-            sql.Literal(credentials))
+            sql.Literal('s3://{}/{}'.format(bucket, key)),
+            sql.Literal('aws_access_key_id={};aws_secret_access_key={}'.format(
+                credentials.get('aws_access_key_id'),
+                credentials.get('aws_secret_access_key'))),
+            sql.Literal(RESERVED_NULL_DEFAULT))
 
         cur.execute(copy_sql)
 
         pattern = re.compile(SINGER_LEVEL.format('[0-9]+'))
         subkeys = list(filter(lambda header: re.match(pattern, header) is not None, columns))
 
-        update_sql = self.get_update_sql(remote_schema['name'],
-                                         temp_table_name,
-                                         remote_schema['key_properties'],
-                                         subkeys)
+        update_sql = self._get_update_sql(remote_schema['name'],
+                                          temp_table_name,
+                                          remote_schema['key_properties'],
+                                          columns,
+                                          subkeys)
+
         cur.execute(update_sql)

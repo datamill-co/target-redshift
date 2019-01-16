@@ -7,12 +7,17 @@ SEPARATOR = '__'
 
 class S3:
     def __init__(self, aws_access_key_id, aws_secret_access_key, bucket, key_prefix=''):
+        self._credentials = {'aws_access_key_id': aws_access_key_id,
+                             'aws_secret_access_key': aws_secret_access_key}
         self.client = boto3.client(
             's3',
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key)
         self.bucket = bucket
         self.key_prefix = key_prefix
+
+    def credentials(self):
+        return self._credentials
 
     def persist(self, readable, key_prefix=''):
         key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '')
