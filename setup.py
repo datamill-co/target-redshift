@@ -9,16 +9,17 @@ setup(
     classifiers=['Programming Language :: Python :: 3 :: Only'],
     py_modules=['target_redshift'],
     install_requires=[
-        'boto3==1.9.78',
-        'singer-target-postgres==0.1.0'
+        'boto3==1.9.79',
+        'singer-target-postgres==0.1.1',
+        'urllib3==1.24.1'
     ],
     setup_requires=[
         "pytest-runner"
     ],
     tests_require=[
         "chance==0.110",
-        "Faker==0.9.2",
-        "pytest==3.9.3"
+        "Faker==1.0.1",
+        "pytest==4.1.1"
     ],
     entry_points='''
       [console_scripts]
