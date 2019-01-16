@@ -5,31 +5,24 @@ import boto3
 SEPARATOR = '__'
 
 
-def client(config):
-    return boto3.client(
-        's3',
-        aws_access_key_id=config.get('aws_access_key_id'),
-        aws_secret_access_key=config.get('aws_secret_access_key'))
+class S3:
+    def __init__(self, aws_access_key_id, aws_secret_access_key, bucket, key_prefix=''):
+        self.client = boto3.client(
+            's3',
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key)
+        self.bucket = bucket
+        self.key_prefix = key_prefix
 
+    def persist(self, readable, key_prefix=''):
+        key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '')
 
-def persist(config, readable, key_prefix=''):
-    if not config.get('bucket'):
-        raise Exception('`config.bucket` required')
-    if not config.get('aws_access_key_id'):
-        raise Exception('`config.aws_access_key_id` required')
-    if not config.get('aws_secret_access_key'):
-        raise Exception('`config.aws_secret_access_key` required')
+        self.client.upload_fileobj(
+            _EncodeBinaryReadable(readable),
+            self.bucket,
+            key)
 
-    key = key_prefix + str(uuid.uuid4()).replace('-', '')
-
-    target_client = client(config)
-
-    target_client.upload_fileobj(
-        _EncodeBinaryReadable(readable),
-        config.get('bucket'),
-        key)
-
-    return [config.get('bucket'), key]
+        return [self.bucket, key]
 
 
 class _EncodeBinaryReadable:

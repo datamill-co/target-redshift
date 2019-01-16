@@ -38,11 +38,12 @@ class RedshiftTarget(PostgresTarget):
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, *args, redshift_schema='public', **kwargs):
+    def __init__(self, connection, s3, *args, redshift_schema='public', **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
 
+        self.s3 = s3
         self.conn = connection
         self.postgres_schema = redshift_schema
 
@@ -111,11 +112,10 @@ class RedshiftTarget(PostgresTarget):
                          temp_table_name,
                          columns,
                          csv_rows):
-        key_prefix = self.s3_config.get('key_prefix', '') + temp_table_name + SEPARATOR
+        key_prefix = temp_table_name + SEPARATOR
 
-        bucket, key = s3.persist(self.s3_config,
-                                 csv_rows,
-                                 key_prefix=key_prefix)
+        bucket, key = self.s3.persist(csv_rows,
+                                      key_prefix=key_prefix)
 
         source = 's3://{}/{}'.format(bucket, key)
 

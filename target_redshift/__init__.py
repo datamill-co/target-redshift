@@ -4,6 +4,7 @@ from singer import utils
 from target_postgres import target_tools
 
 from target_redshift.redshift import RedshiftTarget
+from target_redshift.s3 import S3
 
 LOGGER = singer.get_logger()
 
@@ -21,8 +22,15 @@ def main(config, input_stream=None):
             user=config.get('redshift_username'),
             password=config.get('redshift_password')
     ) as connection:
+        s3_config = config.get('target_s3')
+        s3 = S3(s3_config.get('aws_access_key_id'),
+                s3_config.get('aws_secret_access_key'),
+                s3_config.get('bucket'),
+                s3_config.get('key_prefix'))
+
         redshift_target = RedshiftTarget(
             connection,
+            s3,
             postgres_schema=config.get('redshift_schema', 'public'))
 
         if input_stream:
