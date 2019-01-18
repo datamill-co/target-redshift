@@ -21,8 +21,11 @@ def assert_columns_equal(cursor, table_name, expected_column_tuples):
                        table_name))
     columns = cursor.fetchall()
 
-    assert (not columns and not expected_column_tuples) \
-           or set(columns) == expected_column_tuples
+    expected_column_tuples.add(
+        ('_sdc_target_redshift_create_table_placeholder', 'boolean', 'YES')
+    )
+
+    assert set(columns) == expected_column_tuples
 
 
 def get_count_sql(table_name):
@@ -148,16 +151,16 @@ def test_loading__invalid__configuration__schema(db_cleanup):
         main(CONFIG, input_stream=stream)
 
 
-def test_loading__invalid__default_null_value__non_nullable_column(db_cleanup):
-    class NullDefaultCatStream(CatStream):
-
-        def generate_record(self):
-            record = CatStream.generate_record(self)
-            record['name'] = postgres.RESERVED_NULL_DEFAULT
-            return record
-
-    with pytest.raises(postgres.PostgresError, match=r'.*IntegrityError.*'):
-        main(CONFIG, input_stream=NullDefaultCatStream(20))
+# def test_loading__invalid__default_null_value__non_nullable_column(db_cleanup):
+#     class NullDefaultCatStream(CatStream):
+#
+#         def generate_record(self):
+#             record = CatStream.generate_record(self)
+#             record['name'] = postgres.RESERVED_NULL_DEFAULT
+#             return record
+#
+#     with pytest.raises(postgres.PostgresError, match=r'.*IntegrityError.*'):
+#         main(CONFIG, input_stream=NullDefaultCatStream(20))
 
 
 def test_loading__simple(db_cleanup):
@@ -176,22 +179,22 @@ def test_loading__simple(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'cats__adoption__immunizations',
                                  {
-                                     ('_sdc_level_0_id', 'bigint', 'NO'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES'),
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_source_key_id', 'bigint', 'NO'),
+                                     ('_sdc_source_key_id', 'bigint', 'YES'),
                                      ('date_administered', 'timestamp with time zone', 'YES'),
-                                     ('type', 'text', 'YES')
+                                     ('type', 'character varying', 'YES')
                                  })
 
             cur.execute(get_count_sql('cats'))
@@ -203,19 +206,6 @@ def test_loading__simple(db_cleanup):
             record['flea_check_complete'] = False
 
         assert_records(conn, stream.records, 'cats', 'id')
-
-
-## TODO: Complex types defaulted
-# def test_loading__default__complex_type(db_cleanup):
-#     main(CONFIG, input_stream=NestedStream(10))
-#
-#     with psycopg2.connect(**TEST_DB) as conn:
-#         with conn.cursor() as cur:
-#             cur.execute(get_count_sql('root'))
-#             assert 10 == cur.fetchone()[0]
-#
-#             cur.execute(get_count_sql('root__array_scalar_defaulted'))
-#             assert 100 == cur.fetchone()[0]
 
 
 def test_loading__nested_tables(db_cleanup):
@@ -249,49 +239,49 @@ def test_loading__nested_tables(db_cleanup):
                                      ('_sdc_received_at', 'timestamp with time zone', 'YES'),
                                      ('_sdc_sequence', 'bigint', 'YES'),
                                      ('_sdc_table_version', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
+                                     ('id', 'bigint', 'YES'),
                                      ('null', 'bigint', 'YES'),
                                      ('nested_null__null', 'bigint', 'YES'),
-                                     ('object_of_object_0__object_of_object_1__object_of_object_2__a', 'bigint', 'NO'),
-                                     ('object_of_object_0__object_of_object_1__object_of_object_2__b', 'bigint', 'NO'),
-                                     ('object_of_object_0__object_of_object_1__object_of_object_2__c', 'bigint', 'NO')
+                                     ('object_of_object_0__object_of_object_1__object_of_object_2__a', 'bigint', 'YES'),
+                                     ('object_of_object_0__object_of_object_1__object_of_object_2__b', 'bigint', 'YES'),
+                                     ('object_of_object_0__object_of_object_1__object_of_object_2__c', 'bigint', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'root__object_of_object_0__object_of_object_1__object_of_object_2__array_scalar'[:63],
                                  {
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_source_key_id', 'bigint', 'NO'),
-                                     ('_sdc_level_0_id', 'bigint', 'NO'),
-                                     ('_sdc_value', 'boolean', 'NO')
+                                     ('_sdc_source_key_id', 'bigint', 'YES'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES'),
+                                     ('_sdc_value', 'boolean', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'root__array_of_array',
                                  {
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_source_key_id', 'bigint', 'NO'),
-                                     ('_sdc_level_0_id', 'bigint', 'NO')
+                                     ('_sdc_source_key_id', 'bigint', 'YES'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'root__array_of_array___sdc_value',
                                  {
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_source_key_id', 'bigint', 'NO'),
-                                     ('_sdc_level_0_id', 'bigint', 'NO'),
-                                     ('_sdc_level_1_id', 'bigint', 'NO')
+                                     ('_sdc_source_key_id', 'bigint', 'YES'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES'),
+                                     ('_sdc_level_1_id', 'bigint', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'root__array_of_array___sdc_value___sdc_value',
                                  {
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_source_key_id', 'bigint', 'NO'),
-                                     ('_sdc_level_0_id', 'bigint', 'NO'),
-                                     ('_sdc_level_1_id', 'bigint', 'NO'),
-                                     ('_sdc_level_2_id', 'bigint', 'NO'),
-                                     ('_sdc_value', 'bigint', 'NO')
+                                     ('_sdc_source_key_id', 'bigint', 'YES'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES'),
+                                     ('_sdc_level_1_id', 'bigint', 'YES'),
+                                     ('_sdc_level_2_id', 'bigint', 'YES'),
+                                     ('_sdc_value', 'bigint', 'YES')
                                  })
 
 
@@ -324,13 +314,13 @@ def test_loading__new_non_null_column(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
                                      ('paw_toe_count', 'bigint', 'YES'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {}, {} FROM {}').format(
@@ -363,12 +353,12 @@ def test_loading__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -406,13 +396,13 @@ def test_loading__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name__s', 'text', 'YES'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name__s', 'character varying', 'YES'),
                                      ('name__b', 'boolean', 'YES'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {}, {} FROM {}').format(
@@ -453,14 +443,14 @@ def test_loading__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name__s', 'text', 'YES'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name__s', 'character varying', 'YES'),
                                      ('name__b', 'boolean', 'YES'),
                                      ('name__i', 'bigint', 'YES'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {}, {}, {} FROM {}').format(
@@ -497,12 +487,12 @@ def test_loading__column_type_change__nullable(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -541,12 +531,12 @@ def test_loading__column_type_change__nullable(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'YES'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -580,12 +570,12 @@ def test_loading__column_type_change__nullable(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'YES'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -609,7 +599,7 @@ def test_loading__multi_types_columns(db_cleanup):
             assert_columns_equal(cur,
                                  'root',
                                  {
-                                     ('_sdc_primary_key', 'text', 'NO'),
+                                     ('_sdc_primary_key', 'character varying', 'YES'),
                                      ('_sdc_batched_at', 'timestamp with time zone', 'YES'),
                                      ('_sdc_received_at', 'timestamp with time zone', 'YES'),
                                      ('_sdc_sequence', 'bigint', 'YES'),
@@ -621,16 +611,16 @@ def test_loading__multi_types_columns(db_cleanup):
                                      ('every_type__i__1', 'bigint', 'YES'),
                                      ('every_type__f__1', 'double precision', 'YES'),
                                      ('every_type__b__1', 'boolean', 'YES'),
-                                     ('number_which_only_comes_as_integer', 'double precision', 'NO')
+                                     ('number_which_only_comes_as_integer', 'double precision', 'YES')
                                  })
 
             assert_columns_equal(cur,
                                  'root__every_type',
                                  {
-                                     ('_sdc_source_key__sdc_primary_key', 'text', 'NO'),
-                                     ('_sdc_level_0_id', 'bigint', 'NO'),
+                                     ('_sdc_source_key__sdc_primary_key', 'character varying', 'YES'),
+                                     ('_sdc_level_0_id', 'bigint', 'YES'),
                                      ('_sdc_sequence', 'bigint', 'YES'),
-                                     ('_sdc_value', 'bigint', 'NO'),
+                                     ('_sdc_value', 'bigint', 'YES'),
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -735,12 +725,12 @@ def test_loading__invalid__table_name__nested(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(get_count_sql('cats'))
@@ -818,10 +808,10 @@ def test_loading__invalid_column_name(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
                                      ('___invalid_name', 'bigint', 'YES'),
                                      ('invalid_name', 'bigint', 'YES'),
                                      ('invalid_name__1', 'bigint', 'YES'),
@@ -829,8 +819,8 @@ def test_loading__invalid_column_name(db_cleanup):
                                      ('invalid_name__3', 'bigint', 'YES'),
                                      ('x' * 63, 'bigint', 'YES'),
                                      (('x' * 60 + '__1'), 'bigint', 'YES'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
 
@@ -851,14 +841,14 @@ def test_loading__invalid_column_name__duplicate_name_handling(db_cleanup):
         ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
         ('adoption__was_foster', 'boolean', 'YES'),
         ('age', 'bigint', 'YES'),
-        ('id', 'bigint', 'NO'),
-        ('name', 'text', 'NO'),
-        ('paw_size', 'bigint', 'NO'),
-        ('paw_colour', 'text', 'NO'),
+        ('id', 'bigint', 'YES'),
+        ('name', 'character varying', 'YES'),
+        ('paw_size', 'bigint', 'YES'),
+        ('paw_colour', 'character varying', 'YES'),
         ('x' * 63, 'bigint', 'YES'),
         (('x' * 58 + '__100'), 'bigint', 'YES'),
-        ('flea_check_complete', 'boolean', 'NO'),
-        ('pattern', 'text', 'YES')
+        ('flea_check_complete', 'boolean', 'YES'),
+        ('pattern', 'character varying', 'YES')
     }
 
     for i in range(1, 10):
@@ -893,13 +883,13 @@ def test_loading__invalid_column_name__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('invalid_name', 'text', 'NO'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('invalid_name', 'character varying', 'YES'),
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {} FROM {}').format(
@@ -937,14 +927,14 @@ def test_loading__invalid_column_name__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('invalid_name__s', 'text', 'YES'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('invalid_name__s', 'character varying', 'YES'),
                                      ('invalid_name__b', 'boolean', 'YES'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {}, {} FROM {}').format(
@@ -985,15 +975,15 @@ def test_loading__invalid_column_name__column_type_change(db_cleanup):
                                      ('adoption__adopted_on', 'timestamp with time zone', 'YES'),
                                      ('adoption__was_foster', 'boolean', 'YES'),
                                      ('age', 'bigint', 'YES'),
-                                     ('id', 'bigint', 'NO'),
-                                     ('name', 'text', 'NO'),
-                                     ('paw_size', 'bigint', 'NO'),
-                                     ('paw_colour', 'text', 'NO'),
-                                     ('invalid_name__s', 'text', 'YES'),
+                                     ('id', 'bigint', 'YES'),
+                                     ('name', 'character varying', 'YES'),
+                                     ('paw_size', 'bigint', 'YES'),
+                                     ('paw_colour', 'character varying', 'YES'),
+                                     ('invalid_name__s', 'character varying', 'YES'),
                                      ('invalid_name__b', 'boolean', 'YES'),
                                      ('invalid_name__i', 'bigint', 'YES'),
-                                     ('flea_check_complete', 'boolean', 'NO'),
-                                     ('pattern', 'text', 'YES')
+                                     ('flea_check_complete', 'boolean', 'YES'),
+                                     ('pattern', 'character varying', 'YES')
                                  })
 
             cur.execute(sql.SQL('SELECT {}, {}, {} FROM {}').format(
