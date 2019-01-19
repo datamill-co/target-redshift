@@ -46,6 +46,21 @@ class RedshiftTarget(PostgresTarget):
         self.conn = connection
         self.postgres_schema = redshift_schema
 
+    def write_batch(self, stream_buffer):
+        # WARNING: Using mutability here as there's no simple way to copy the necessary data over
+        nullable_stream_buffer = stream_buffer
+        nullable_stream_buffer.schema = _make_schema_nullable(stream_buffer.schema)
+
+        return PostgresTarget.write_batch(self, nullable_stream_buffer)
+
+    def upsert_table_helper(self, connection, table_schema, metadata):
+        nullable_table_schema = deepcopy(table_schema)
+        nullable_table_schema['schema'] = _make_schema_nullable(nullable_table_schema['schema'])
+        return PostgresTarget.upsert_table_helper(self,
+                                                  connection,
+                                                  nullable_table_schema,
+                                                  metadata)
+
     def add_table(self, cur, name, metadata):
         self._validate_identifier(name)
 
