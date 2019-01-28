@@ -9,14 +9,17 @@ from target_redshift.s3 import S3
 LOGGER = singer.get_logger()
 
 REQUIRED_CONFIG_KEYS = [
+    'redshift_host',
     'redshift_database',
-    'redshift_password'
+    'redshift_username',
+    'redshift_password',
+    'target_s3'
 ]
 
 
 def main(config, input_stream=None):
     with psycopg2.connect(
-            host=config.get('redshift_host', 'localhost'),
+            host=config.get('redshift_host'),
             port=config.get('redshift_port', 5439),
             dbname=config.get('redshift_database'),
             user=config.get('redshift_username'),
