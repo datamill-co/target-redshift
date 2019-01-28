@@ -87,6 +87,9 @@ jobs:
       - *restore__cache
       - attach_workspace:
           at: "./"
+      - add_ssh_keys:
+          fingerprints:
+            - "92:84:94:14:49:9d:42:5a:67:ea:92:ee:1a:58:98:f6"
       - run:
           name: Run Tests
           command: |
