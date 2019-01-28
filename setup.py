@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='singer-target-redshift',
+    name='target-redshift',
     version="0.0.0",
     description='Singer.io target for loading data into redshift',
     classifiers=['Programming Language :: Python :: 3 :: Only'],
