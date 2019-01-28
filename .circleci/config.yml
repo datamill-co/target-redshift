@@ -1,13 +1,45 @@
 version: 2.0
 
+filters: &filters
+  filters:
+    tags:
+      only: /^v[0-9]+(\.[0-9]+)*$/
+
+filters__tags: &filters__tags
+  filters:
+    branches:
+      ignore: /.*/
+    tags:
+      only: /^v[0-9]+(\.[0-9]+)*$/
+
+
 workflows:
   version: 2
   test:
     jobs:
-      - cache
+      - cache:
+          <<: *filters
+      - build:
+          <<: *filters
+          requires:
+            - cache
       - test--redshift:
           requires:
             - cache
+      - test-release:
+          <<: *filters__tags
+          requires:
+            - test--redshift
+            - build
+      - approve-release:
+          <<: *filters__tags
+          type: approval
+          requires:
+            - test-release
+      - release:
+          <<: *filters__tags
+          requires:
+            - approve-release
 
 cache: &cache
          deps-v0-{{ checksum "setup.py" }}
@@ -79,3 +111,78 @@ jobs:
       - store_artifacts:
           path: target/test-results
           destination: raw-test-output
+
+  build:
+    working_directory: /code/
+    docker:
+      - image: python:3.7.2-stretch
+    steps:
+      - checkout
+      - *restore__cache
+      - attach_workspace:
+          at: "./"
+      - run:
+          name: Build disttribution
+          command: |
+            source venv--target-redshift/bin/activate
+
+            pip install --upgrade setuptools wheel twine
+
+            python setup.py sdist bdist_wheel
+
+            deactivate
+
+      - persist_to_workspace:
+          root: "./"
+          paths:
+            - "./dist"
+
+  test-release:
+    working_directory: /code/
+    docker:
+      - image: python:3.7.2-stretch
+    steps:
+      - checkout
+      - *restore__cache
+      - attach_workspace:
+          at: "./"
+      - run:
+          name: Validate tag
+          command: |
+            export TAG=`echo $CIRCLE_TAG | sed 's/v//'`
+            VERSION=`grep version setup.py | sed 's/^.*version="\(.*\)",.*$/\1/'`
+
+            echo tag: $TAG equals version: $VERSION '?'
+
+            [[ $TAG == $VERSION ]]
+      - run:
+          name: Install upload tools
+          command: pip install --upgrade twine
+      - run:
+          name: Test Publish
+          environment:
+            TWINE_USERNAME: datamill
+            TWINE_REPOSITORY_URL: https://test.pypi.org/legacy/
+          command: |
+            export TWINE_PASSWORD=$PYPI__PASSWORD__TEST
+            twine upload ./dist/*
+
+  release:
+    working_directory: /code/
+    docker:
+      - image: python:3.7.2-stretch
+    steps:
+      - checkout
+      - *restore__cache
+      - attach_workspace:
+          at: "./"
+      - run:
+          name: Install upload tools
+          command: pip install --upgrade twine
+      - run:
+          name: Publish
+          environment:
+            TWINE_USERNAME: datamill
+          command: |
+            export TWINE_PASSWORD=$PYPI__PASSWORD
+            twine upload ./dist/*
