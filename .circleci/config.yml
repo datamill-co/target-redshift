@@ -1,0 +1,81 @@
+version: 2.0
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - cache
+      - test--redshift:
+          requires:
+            - cache
+
+cache: &cache
+         deps-v0-{{ checksum "setup.py" }}
+
+restore__cache: &restore__cache
+  restore_cache:
+    keys:
+      - *cache
+
+jobs:
+  cache:
+    working_directory: /code/
+    docker:
+      - image: python:3.7.2-stretch
+    steps:
+      - checkout
+      - *restore__cache
+
+      - run:
+          name: Install target-redshift
+          command: |
+            python -m venv venv--target-redshift
+            source venv--target-redshift/bin/activate
+            python setup.py install
+            deactivate
+
+      - save_cache:
+          key: *cache
+          paths:
+            - "./venv--target-redshift"
+            - "/usr/local/bin"
+            - "/usr/local/lib/python3.7/site-packages"
+
+      - persist_to_workspace:
+          root: "./"
+          paths:
+            - "./venv--target-redshift"
+
+  test--redshift:
+    docker:
+      - image: python:3.7.2-stretch
+    working_directory: /code/
+    steps:
+      - checkout
+      - *restore__cache
+      - attach_workspace:
+          at: "./"
+      - run:
+          name: Run Tests
+          command: |
+            source venv--target-redshift/bin/activate
+            ## To avoid collision with other running tests
+            export TARGET_S3_KEY_PREFIX=circleci_target_redshift_test_`date +%s`
+            export REDSHIFT_SCHEMA=circleci_target_redshift_test_`date +%s`
+
+            python setup.py pytest --verbose
+          environment:
+            REDSHIFT_PORT: 5439
+            TARGET_S3_BUCKET: 'test-target-redshift'
+            ## Specifier in the project envvars in CCI
+            #   environment:
+            #     REDSHIFT_HOST='<your-host-name>' # Most likely 'localhost'
+            #     REDSHIFT_DATABASE='<your-db-name>'     # We use 'target_redshift_test'
+            #     REDSHIFT_USERNAME='<your-user-name'
+            #     REDSHIFT_PASSWORD='<your-password>'
+            #     TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
+            #     TARGET_S3_AWS_SECRECT_ACCESS_KEY='<secret>'
+
+      - store_artifacts:
+          path: target/test-results
+          destination: raw-test-output
