@@ -27,9 +27,9 @@ workflows:
           requires:
             - cache
       - test-release:
-          <<: *filters__tags
+          <<: *filters
           requires:
-            - test--redshift
+            #- test--redshift
             - build
       - approve-release:
           <<: *filters__tags
@@ -146,15 +146,15 @@ jobs:
       - *restore__cache
       - attach_workspace:
           at: "./"
-      - run:
-          name: Validate tag
-          command: |
-            export TAG=`echo $CIRCLE_TAG | sed 's/v//'`
-            VERSION=`grep version setup.py | sed 's/^.*version="\(.*\)",.*$/\1/'`
-
-            echo tag: $TAG equals version: $VERSION '?'
-
-            [[ $TAG == $VERSION ]]
+#      - run:
+#          name: Validate tag
+#          command: |
+#            export TAG=`echo $CIRCLE_TAG | sed 's/v//'`
+#            VERSION=`grep version setup.py | sed 's/^.*version="\(.*\)",.*$/\1/'`
+#
+#            echo tag: $TAG equals version: $VERSION '?'
+#
+#            [[ $TAG == $VERSION ]]
       - run:
           name: Install upload tools
           command: pip install --upgrade twine
