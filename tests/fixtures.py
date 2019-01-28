@@ -20,7 +20,8 @@ CONFIG = {
          'aws_secret_access_key': os.environ['TARGET_S3_AWS_SECRET_ACCESS_KEY'],
          'bucket': os.environ['TARGET_S3_BUCKET'],
          'key_prefix': os.environ['TARGET_S3_KEY_PREFIX']},
-    'disable_collection': True
+    'disable_collection': True,
+    'logging_level': 'DEBUG'
 }
 
 TEST_DB = {

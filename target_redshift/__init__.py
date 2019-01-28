@@ -31,7 +31,9 @@ def main(config, input_stream=None):
         redshift_target = RedshiftTarget(
             connection,
             s3,
-            postgres_schema=config.get('redshift_schema', 'public'))
+            postgres_schema=config.get('redshift_schema', 'public'),
+            logging_level=config.get('logging_level')
+        )
 
         if input_stream:
             target_tools.stream_to_target(input_stream, redshift_target, config=config)

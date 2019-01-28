@@ -38,14 +38,13 @@ class RedshiftTarget(PostgresTarget):
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, s3, *args, redshift_schema='public', **kwargs):
+    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
 
         self.s3 = s3
-        self.conn = connection
-        self.postgres_schema = redshift_schema
+        PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level)
 
     def write_batch(self, stream_buffer):
         # WARNING: Using mutability here as there's no simple way to copy the necessary data over
@@ -54,13 +53,14 @@ class RedshiftTarget(PostgresTarget):
 
         return PostgresTarget.write_batch(self, nullable_stream_buffer)
 
-    def upsert_table_helper(self, connection, table_schema, metadata):
+    def upsert_table_helper(self, connection, table_schema, metadata, log_schema_changes=True):
         nullable_table_schema = deepcopy(table_schema)
         nullable_table_schema['schema'] = _make_schema_nullable(nullable_table_schema['schema'])
         return PostgresTarget.upsert_table_helper(self,
                                                   connection,
                                                   nullable_table_schema,
-                                                  metadata)
+                                                  metadata,
+                                                  log_schema_changes=log_schema_changes)
 
     def add_table(self, cur, name, metadata):
         self._validate_identifier(name)

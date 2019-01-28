@@ -10,7 +10,7 @@ setup(
     py_modules=['target_redshift'],
     install_requires=[
         'boto3==1.9.79',
-        'singer-target-postgres==0.1.2',
+        'singer-target-postgres==0.1.3',
         'urllib3==1.24.1'
     ],
     setup_requires=[
