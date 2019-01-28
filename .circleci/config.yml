@@ -98,6 +98,9 @@ jobs:
             export TARGET_S3_KEY_PREFIX=circleci_target_redshift_test_`date +%s`
             export REDSHIFT_SCHEMA=circleci_target_redshift_test_`date +%s`
 
+            ssh -4 -o "StrictHostKeyChecking no" -nNT -L 5439:$REDSHIFT_HOST:5439 ubuntu@$EC2_GATEWAY_BOX &
+            export REDSHIFT_HOST=localhost
+
             python setup.py pytest --verbose
           environment:
             REDSHIFT_PORT: 5439
