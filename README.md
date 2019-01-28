@@ -112,14 +112,15 @@ here.
     - if the `$ref` is broken, the behaviour is considered unexpected
 - Any values which are the `string` `NULL` will be streamed to Redshift as the literal `null`
 - Table names are restricted to:
-  - 65535 characters in length
+  - 127 characters in length
   - can only be composed of `_`, lowercase letters, numbers, `$`
   - cannot start with `$`
   - ASCII characters
 - Field/Column names are restricted to:
-  - 65535 characters in length
+  - 127 characters in length
   - ASCII characters
 - Fields/Columns are ***ALL*** `nullable`
+- Fields/Columns use the default _largest_ type available for them
 
 ## Usage Logging
 
