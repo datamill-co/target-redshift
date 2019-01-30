@@ -2,6 +2,7 @@ import psycopg2
 import singer
 from singer import utils
 from target_postgres import target_tools
+from target_postgres.postgres import MillisLoggingConnection
 
 from target_redshift.redshift import RedshiftTarget
 from target_redshift.s3 import S3
@@ -19,6 +20,7 @@ REQUIRED_CONFIG_KEYS = [
 
 def main(config, input_stream=None):
     with psycopg2.connect(
+            connection_factory=MillisLoggingConnection,
             host=config.get('redshift_host'),
             port=config.get('redshift_port', 5439),
             dbname=config.get('redshift_database'),

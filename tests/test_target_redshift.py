@@ -208,7 +208,7 @@ def test_loading__nested_tables(db_cleanup):
             assert 50 == cur.fetchone()[0]
 
             cur.execute(
-                get_count_sql('root__object_of_object_0__object_of_object_1__object_of_object_2__array_scalar'[:63]))
+                get_count_sql('root__object_of_object_0__object_of_object_1__object_of_object_2__array_scalar'))
             assert 50 == cur.fetchone()[0]
 
             cur.execute(get_count_sql('root__array_of_array'))
@@ -236,7 +236,7 @@ def test_loading__nested_tables(db_cleanup):
                                  })
 
             assert_columns_equal(cur,
-                                 'root__object_of_object_0__object_of_object_1__object_of_object_2__array_scalar'[:63],
+                                 'root__object_of_object_0__object_of_object_1__object_of_object_2__array_scalar',
                                  {
                                      ('_sdc_sequence', 'bigint', 'YES'),
                                      ('_sdc_source_key_id', 'bigint', 'YES'),
