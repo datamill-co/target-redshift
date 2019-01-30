@@ -24,6 +24,7 @@ workflows:
           requires:
             - cache
       - test--redshift:
+          <<: *filters
           requires:
             - cache
       - test-release:
