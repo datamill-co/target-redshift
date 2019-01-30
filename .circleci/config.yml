@@ -95,8 +95,8 @@ jobs:
           command: |
             source venv--target-redshift/bin/activate
             ## To avoid collision with other running tests
-            export TARGET_S3_KEY_PREFIX=circleci_target_redshift_test_`date +%s`
-            export REDSHIFT_SCHEMA=circleci_target_redshift_test_`date +%s`
+            export TARGET_S3_KEY_PREFIX="circleci_target_redshift_test_`date +%s`__"
+            export REDSHIFT_SCHEMA="$TARGET_S3_KEY_PREFIX"
 
             ssh -4 -o "StrictHostKeyChecking no" -nNT -L 5439:$REDSHIFT_HOST:5439 ubuntu@$EC2_GATEWAY_BOX &
             export REDSHIFT_HOST=localhost
