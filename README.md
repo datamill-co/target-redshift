@@ -170,7 +170,16 @@ See the [PyTest](#pytest) commands below!
 
 ### DB
 
-To run the tests, you will need an _actual_ Redshift cluster running.
+To run the tests, you will need an _actual_ Redshift cluster running, and a user that either:
+
+- Has the ability to _create_ schemas therein
+  - This is required if you wish to run multiple versions of the tests, similar
+  to how we run our [CI tests by varying the `REDSHIFT_SCHEMA` envvar](https://github.com/datamill-co/target-redshift/blob/master/.circleci/config.yml#L94-L96)
+
+- has access to the `public` schema
+  - If the `REDSHIFT_SCHEMA` is seen to be the string `"public"`, the tests will ignore creating and dropping schemas
+  - This setup is often preferred for situations in which `GRANT CREATE ON DATABASE db TO user;`
+  is viewed as too risky
 
 Make sure to set the following env vars for [PyTest](#pytest):
 
