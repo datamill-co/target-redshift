@@ -27,7 +27,7 @@ workflows:
           requires:
             - cache
       - test-release:
-          <<: *filters
+          <<: *filters__tags
           requires:
             - test--redshift
             - build
