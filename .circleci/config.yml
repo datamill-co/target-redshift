@@ -104,11 +104,11 @@ jobs:
             python setup.py pytest --verbose
           environment:
             REDSHIFT_PORT: 5439
+            REDSHIFT_DATABASE: 'test_target_redshift'
             TARGET_S3_BUCKET: 'test-target-redshift'
             ## Specifier in the project envvars in CCI
             #   environment:
             #     REDSHIFT_HOST='<your-host-name>' # Most likely 'localhost'
-            #     REDSHIFT_DATABASE='<your-db-name>'     # We use 'target_redshift_test'
             #     REDSHIFT_USERNAME='<your-user-name'
             #     REDSHIFT_PASSWORD='<your-password>'
             #     TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'

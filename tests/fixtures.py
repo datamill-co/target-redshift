@@ -428,10 +428,22 @@ class MultiTypeStream(FakeStream):
         }
 
 
-def clear_db():
+def clear_schema():
     with psycopg2.connect(**TEST_DB) as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema = 'public'")
+            cur.execute(sql.SQL(
+                'DROP SCHEMA IF EXISTS {} CASCADE;'
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema'])))
+
+
+def clear_tables():
+    with psycopg2.connect(**TEST_DB) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql.SQL(
+                'SELECT table_name FROM information_schema.tables WHERE table_schema = {}'
+            ).format(
+                sql.Literal(CONFIG['redshift_schema'])))
             drop_command = ''
             for table in cur.fetchall():
                 drop_command += 'DROP TABLE IF EXISTS ' + table[0] + ';'
@@ -440,9 +452,30 @@ def clear_db():
                         'commit;')
 
 
+def clear_db():
+    if CONFIG['redshift_schema'] == 'public':
+        clear_tables()
+    else:
+        clear_schema()
+
+
+def create_schema():
+    if CONFIG['redshift_schema'] == 'public':
+        return None
+
+    with psycopg2.connect(**TEST_DB) as conn:
+        with conn.cursor() as cur:
+            cur.execute(sql.SQL(
+                'CREATE SCHEMA IF NOT EXISTS {};'
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema'])))
+
+
 @pytest.fixture
-def db_cleanup():
+def db_prep():
     clear_db()
+
+    create_schema()
 
     yield
 

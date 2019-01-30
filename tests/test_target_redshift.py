@@ -6,7 +6,7 @@ from psycopg2 import sql
 import psycopg2.extras
 import pytest
 
-from fixtures import CatStream, CONFIG, db_cleanup, MultiTypeStream, NestedStream, TEST_DB
+from fixtures import CatStream, CONFIG, db_prep, MultiTypeStream, NestedStream, TEST_DB
 from target_postgres import singer_stream
 from target_postgres.target_tools import TargetError
 
@@ -14,9 +14,12 @@ from target_redshift import main
 
 
 def assert_columns_equal(cursor, table_name, expected_column_tuples):
-    cursor.execute("SELECT column_name, data_type, is_nullable FROM information_schema.columns " + \
-                   "WHERE table_schema = 'public' and table_name = '{}';".format(
-                       table_name))
+    cursor.execute(sql.SQL(
+        "SELECT column_name, data_type, is_nullable FROM information_schema.columns " + \
+        "WHERE table_schema = {} and table_name = {};"
+    ).format(
+        sql.Literal(CONFIG['redshift_schema']),
+        sql.Literal(table_name)))
     columns = cursor.fetchall()
 
     expected_column_tuples.add(
@@ -27,7 +30,11 @@ def assert_columns_equal(cursor, table_name, expected_column_tuples):
 
 
 def get_count_sql(table_name):
-    return 'SELECT count(*) FROM "public"."{}"'.format(table_name)
+    return sql.SQL(
+        'SELECT count(*) FROM {}.{}'
+    ).format(
+        sql.Identifier(CONFIG['redshift_schema']),
+        sql.Identifier(table_name))
 
 
 def get_pk_key(pks, obj, subrecord=False):
@@ -94,7 +101,11 @@ def assert_records(conn, records, table_name, pks, match_pks=False):
     with conn.cursor(cursor_factory=psycopg2.extras.DictCursor) as cur:
         cur.execute("set timezone='UTC';")
 
-        cur.execute('SELECT * FROM {}'.format(table_name))
+        cur.execute(sql.SQL(
+            'SELECT * FROM {}.{}'
+        ).format(
+            sql.Identifier(CONFIG['redshift_schema']),
+            sql.Identifier(table_name)))
         persisted_records_raw = cur.fetchall()
 
         persisted_records = {}
@@ -118,8 +129,11 @@ def assert_records(conn, records, table_name, pks, match_pks=False):
 
         sub_pks = list(map(lambda pk: singer_stream.SINGER_SOURCE_PK_PREFIX + pk, pks))
         for subtable_name, items in subtables.items():
-            cur.execute('SELECT * FROM {}'.format(
-                table_name + '__' + subtable_name))
+            cur.execute(sql.SQL(
+                'SELECT * FROM {}.{}'
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema']),
+                sql.Identifier(table_name + '__' + subtable_name)))
             persisted_records_raw = cur.fetchall()
 
             persisted_records = {}
@@ -140,7 +154,7 @@ def assert_records(conn, records, table_name, pks, match_pks=False):
                 assert sorted(list(persisted_records.keys())) == sorted(records_pks)
 
 
-def test_loading__invalid__configuration__schema(db_cleanup):
+def test_loading__invalid__configuration__schema(db_prep):
     stream = CatStream(1)
     stream.schema = deepcopy(stream.schema)
     stream.schema['schema']['type'] = 'invalid type for a JSON Schema'
@@ -149,7 +163,7 @@ def test_loading__invalid__configuration__schema(db_cleanup):
         main(CONFIG, input_stream=stream)
 
 
-def test_loading__simple(db_cleanup):
+def test_loading__simple(db_prep):
     stream = CatStream(100)
     main(CONFIG, input_stream=stream)
 
@@ -194,7 +208,7 @@ def test_loading__simple(db_cleanup):
         assert_records(conn, stream.records, 'cats', 'id')
 
 
-def test_loading__nested_tables(db_cleanup):
+def test_loading__nested_tables(db_prep):
     main(CONFIG, input_stream=NestedStream(10))
 
     with psycopg2.connect(**TEST_DB) as conn:
@@ -271,7 +285,7 @@ def test_loading__nested_tables(db_cleanup):
                                  })
 
 
-def test_loading__new_non_null_column(db_cleanup):
+def test_loading__new_non_null_column(db_prep):
     cat_count = 50
     main(CONFIG, input_stream=CatStream(cat_count))
 
@@ -309,9 +323,10 @@ def test_loading__new_non_null_column(db_cleanup):
                                      ('pattern', 'character varying', 'YES')
                                  })
 
-            cur.execute(sql.SQL('SELECT {}, {} FROM {}').format(
+            cur.execute(sql.SQL('SELECT {}, {} FROM {}.{}').format(
                 sql.Identifier('id'),
                 sql.Identifier('paw_toe_count'),
+                sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('cats')
             ))
 
@@ -323,7 +338,7 @@ def test_loading__new_non_null_column(db_cleanup):
             assert cat_count == len([x for x in persisted_records if x[1] is not None])
 
 
-def test_loading__column_type_change(db_cleanup):
+def test_loading__column_type_change(db_prep):
     cat_count = 20
     main(CONFIG, input_stream=CatStream(cat_count))
 
@@ -347,8 +362,9 @@ def test_loading__column_type_change(db_cleanup):
                                      ('pattern', 'character varying', 'YES')
                                  })
 
-            cur.execute(sql.SQL('SELECT {} FROM {}').format(
+            cur.execute(sql.SQL('SELECT {} FROM {}.{}').format(
                 sql.Identifier('name'),
+                sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('cats')
             ))
             persisted_records = cur.fetchall()
@@ -391,9 +407,10 @@ def test_loading__column_type_change(db_cleanup):
                                      ('pattern', 'character varying', 'YES')
                                  })
 
-            cur.execute(sql.SQL('SELECT {}, {} FROM {}').format(
+            cur.execute(sql.SQL('SELECT {}, {} FROM {}.{}').format(
                 sql.Identifier('name__s'),
                 sql.Identifier('name__b'),
+                sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('cats')
             ))
             persisted_records = cur.fetchall()
@@ -439,10 +456,11 @@ def test_loading__column_type_change(db_cleanup):
                                      ('pattern', 'character varying', 'YES')
                                  })
 
-            cur.execute(sql.SQL('SELECT {}, {}, {} FROM {}').format(
+            cur.execute(sql.SQL('SELECT {}, {}, {} FROM {}.{}').format(
                 sql.Identifier('name__s'),
                 sql.Identifier('name__b'),
                 sql.Identifier('name__i'),
+                sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('cats')
             ))
             persisted_records = cur.fetchall()
@@ -457,7 +475,7 @@ def test_loading__column_type_change(db_cleanup):
             assert 0 == len([x for x in persisted_records if x[0] is None and x[1] is None and x[2] is None])
 
 
-def test_loading__multi_types_columns(db_cleanup):
+def test_loading__multi_types_columns(db_prep):
     stream_count = 50
     main(CONFIG, input_stream=MultiTypeStream(stream_count))
 
@@ -490,8 +508,9 @@ def test_loading__multi_types_columns(db_cleanup):
                                      ('_sdc_value', 'bigint', 'YES'),
                                  })
 
-            cur.execute(sql.SQL('SELECT {} FROM {}').format(
+            cur.execute(sql.SQL('SELECT {} FROM {}.{}').format(
                 sql.Identifier('number_which_only_comes_as_integer'),
+                sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('root')
             ))
             persisted_records = cur.fetchall()
@@ -501,7 +520,7 @@ def test_loading__multi_types_columns(db_cleanup):
             assert stream_count == len([x for x in persisted_records if isinstance(x[0], float)])
 
 
-def test_upsert(db_cleanup):
+def test_upsert(db_prep):
     stream = CatStream(100)
     main(CONFIG, input_stream=stream)
 
@@ -530,7 +549,7 @@ def test_upsert(db_cleanup):
         assert_records(conn, stream.records, 'cats', 'id')
 
 
-def test_nested_delete_on_parent(db_cleanup):
+def test_nested_delete_on_parent(db_prep):
     stream = CatStream(100, nested_count=3)
     main(CONFIG, input_stream=stream)
 
@@ -552,7 +571,7 @@ def test_nested_delete_on_parent(db_cleanup):
     assert low_nested < high_nested
 
 
-def test_full_table_replication(db_cleanup):
+def test_full_table_replication(db_prep):
     stream = CatStream(110, version=0, nested_count=3)
     main(CONFIG, input_stream=stream)
 
@@ -607,7 +626,7 @@ def test_full_table_replication(db_cleanup):
     assert older_version_count == version_2_count
 
 
-def test_deduplication_newer_rows(db_cleanup):
+def test_deduplication_newer_rows(db_prep):
     stream = CatStream(100, nested_count=3, duplicates=2)
     main(CONFIG, input_stream=stream)
 
@@ -618,8 +637,13 @@ def test_deduplication_newer_rows(db_cleanup):
             cur.execute(get_count_sql('cats__adoption__immunizations'))
             nested_table_count = cur.fetchone()[0]
 
-            cur.execute('SELECT _sdc_sequence FROM cats WHERE id in ({})'.format(
-                ','.join(map(str, stream.duplicate_pks_used))))
+            cur.execute(sql.SQL(
+                'SELECT _sdc_sequence FROM {}.{} WHERE id in '
+                + '({})'.format(','.join(map(str, stream.duplicate_pks_used)))
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema']),
+                sql.Identifier('cats'),
+                sql.Literal(','.join(map(str, stream.duplicate_pks_used)))))
             dup_cat_records = cur.fetchall()
 
     assert stream.record_message_count == 102
@@ -630,7 +654,7 @@ def test_deduplication_newer_rows(db_cleanup):
         assert record[0] == stream.sequence + 200
 
 
-def test_deduplication_older_rows(db_cleanup):
+def test_deduplication_older_rows(db_prep):
     stream = CatStream(100, nested_count=2, duplicates=2, duplicate_sequence_delta=-100)
     main(CONFIG, input_stream=stream)
 
@@ -641,8 +665,12 @@ def test_deduplication_older_rows(db_cleanup):
             cur.execute(get_count_sql('cats__adoption__immunizations'))
             nested_table_count = cur.fetchone()[0]
 
-            cur.execute('SELECT _sdc_sequence FROM cats WHERE id in ({})'.format(
-                ','.join(map(str, stream.duplicate_pks_used))))
+            cur.execute(sql.SQL(
+                'SELECT _sdc_sequence FROM {}.{} WHERE id in '
+                + '({})'.format(','.join(map(str, stream.duplicate_pks_used)))
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema']),
+                sql.Identifier('cats')))
             dup_cat_records = cur.fetchall()
 
     assert stream.record_message_count == 102
@@ -653,7 +681,7 @@ def test_deduplication_older_rows(db_cleanup):
         assert record[0] == stream.sequence
 
 
-def test_deduplication_existing_new_rows(db_cleanup):
+def test_deduplication_existing_new_rows(db_prep):
     stream = CatStream(100, nested_count=2)
     main(CONFIG, input_stream=stream)
 
@@ -671,7 +699,11 @@ def test_deduplication_existing_new_rows(db_cleanup):
             cur.execute(get_count_sql('cats__adoption__immunizations'))
             nested_table_count = cur.fetchone()[0]
 
-            cur.execute('SELECT DISTINCT _sdc_sequence FROM cats')
+            cur.execute(sql.SQL(
+                'SELECT DISTINCT _sdc_sequence FROM {}.{}'
+            ).format(
+                sql.Identifier(CONFIG['redshift_schema']),
+                sql.Identifier('cats')))
             sequences = cur.fetchall()
 
     assert table_count == 100
