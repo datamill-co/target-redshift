@@ -2,11 +2,12 @@ import json
 import os
 import random
 
-import pytest
-import psycopg2
 import arrow
-from faker import Faker
 from chance import chance
+from faker import Faker
+import psycopg2
+from psycopg2 import sql
+import pytest
 
 CONFIG = {
     'redshift_host': os.environ['REDSHIFT_HOST'],

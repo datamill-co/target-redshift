@@ -9,8 +9,6 @@ from target_postgres.singer_stream import (
 )
 from target_postgres.sql_base import SEPARATOR
 
-from target_redshift import s3
-
 
 class RedshiftError(PostgresError):
     """
