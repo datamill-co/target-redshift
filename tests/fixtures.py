@@ -59,7 +59,7 @@ CATS_SCHEMA = {
                 'type': ['boolean'],
                 'default': False
             },
-            'pattern': {
+            'Pattern': {
                 'type': ['null', 'string']
             },
             'age': {
@@ -211,7 +211,7 @@ class CatStream(FakeStream):
         return {
             'id': self.id,
             'name': fake.first_name(),
-            'pattern': chance.pickone(['Tabby', 'Tuxedo', 'Calico', 'Tortoiseshell']),
+            'Pattern': chance.pickone(['Tabby', 'Tuxedo', 'Calico', 'Tortoiseshell']),
             'age': random.randint(1, 15),
             'adoption': adoption
         }
