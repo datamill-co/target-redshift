@@ -120,7 +120,7 @@ here.
   - 127 characters in length
   - ASCII characters
 - Fields/Columns are ***ALL*** `nullable`
-- Fields/Columns use the default _largest_ type available for them
+- Fields/Columns use a default of 2500 characters (in order to be able to work with a large number of columns).
 
 ## Usage Logging
 
