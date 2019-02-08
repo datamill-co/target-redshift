@@ -36,6 +36,7 @@ class RedshiftTarget(PostgresTarget):
     IDENTIFIER_FIELD_LENGTH = 127
 
     MAX_VARCHAR = 65535
+    DEFAULT_COLUMN_LENGTH = 2500
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
@@ -96,7 +97,7 @@ class RedshiftTarget(PostgresTarget):
     def json_schema_to_sql_type(self, schema):
         psql_type = PostgresTarget.json_schema_to_sql_type(self, schema)
 
-        max_length = schema.get('maxLength', self.MAX_VARCHAR)
+        max_length = schema.get('maxLength', self.DEFAULT_COLUMN_LENGTH)
         if max_length > self.MAX_VARCHAR:
             max_length = self.MAX_VARCHAR
 
