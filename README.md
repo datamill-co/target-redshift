@@ -41,6 +41,7 @@ pip install target-redshift
      "redshift_username": "myuser",
      "redshift_password": "1234",
      "redshift_schema": "mytapname",
+     "default_column_length": 1000,
      "target_s3": {
        "aws_access_key_id": "AKIA...",
        "aws_secret_access_key": "supersecret",
@@ -75,6 +76,7 @@ here.
 | `invalid_records_threshold` | `["integer", "null"]` | `0` | Include a positive value `n` in your config to allow for `target-redshift` to encounter at most `n` invalid records per stream before giving up. |
 | `disable_collection` | `["string", "null"]` | `false` | Include `true` in your config to disable [Singer Usage Logging](#usage-logging). |
 | `logging_level` | `["string", "null"]` | `"INFO"` | The level for logging. Set to `DEBUG` to get things like queries executed, timing of those queries, etc. See [Python's Logger Levels](https://docs.python.org/3/library/logging.html#levels) for information about valid values. |
+|'default_column_length'| `["integer", "null"]` | `5432` | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535. |
 | `target_s3` | `["object"]` | `N/A` | See `S3` below |
 
 #### S3 Config.json
@@ -149,6 +151,7 @@ REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
 REDSHIFT_PORT='<your-port>' # Probably 5439
 REDSHIFT_USERNAME='<your-user-name'
 REDSHIFT_PASSWORD='<your-password>'
+DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
 TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
 TARGET_S3_AWS_SECRET_ACCESS_KEY='<secret>'
 TARGET_S3_BUCKET='<bucket-string>'
@@ -190,6 +193,7 @@ $ EXPORT REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
 $ EXPORT REDSHIFT_PORT='<your-port>' # Probably 5439
 $ EXPORT REDSHIFT_USERNAME='<your-user-name'
 $ EXPORT REDSHIFT_PASSWORD='<your-password>' # Redshift requires passwords
+$ EXPORT DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
 ```
 
 ### S3
