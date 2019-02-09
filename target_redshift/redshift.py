@@ -36,16 +36,16 @@ class RedshiftTarget(PostgresTarget):
     IDENTIFIER_FIELD_LENGTH = 127
 
     MAX_VARCHAR = 65535
-    DEFAULT_COLUMN_LENGTH = 2500
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, **kwargs):
+    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, default_column_length , **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
 
         self.s3 = s3
+        self.default_column_length = default_column_length
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level)
 
     def write_batch(self, stream_buffer):
@@ -97,8 +97,8 @@ class RedshiftTarget(PostgresTarget):
     def json_schema_to_sql_type(self, schema):
         psql_type = PostgresTarget.json_schema_to_sql_type(self, schema)
 
-        max_length = schema.get('maxLength', self.DEFAULT_COLUMN_LENGTH)
-        if max_length > self.DEFAULT_COLUMN_LENGTH:
+        max_length = schema.get('maxLength', self.default_column_length)
+        if max_length > self.default_column_length:
             max_length = self.MAX_VARCHAR
 
         if psql_type.upper() == 'TEXT':

@@ -37,7 +37,8 @@ def main(config, input_stream=None):
             connection,
             s3,
             redshift_schema=config.get('redshift_schema', 'public'),
-            logging_level=config.get('logging_level')
+            logging_level=config.get('logging_level'),
+            default_column_length=config.get('default_column_length', 1000)
         )
 
         if input_stream:
