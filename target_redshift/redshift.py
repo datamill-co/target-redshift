@@ -34,12 +34,12 @@ class RedshiftTarget(PostgresTarget):
 
     # https://docs.aws.amazon.com/redshift/latest/dg/r_names.html
     IDENTIFIER_FIELD_LENGTH = 127
-
+    DEFAULT_COLUMN_LENGTH = 1000
     MAX_VARCHAR = 65535
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, default_column_length , **kwargs):
+    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, default_column_length=DEFAULT_COLUMN_LENGTH , **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
