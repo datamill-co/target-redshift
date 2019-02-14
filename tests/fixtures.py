@@ -16,7 +16,7 @@ CONFIG = {
     'redshift_username': os.environ['REDSHIFT_USERNAME'],
     'redshift_password': os.environ['REDSHIFT_PASSWORD'],
     'redshift_schema': os.environ['REDSHIFT_SCHEMA'],
-    'default_column_length' : os.environ['DEFAULT_COLUMN_LENGTH']
+    'default_column_length' : os.environ['DEFAULT_COLUMN_LENGTH'],
     'target_s3':
         {'aws_access_key_id': os.environ['TARGET_S3_AWS_ACCESS_KEY_ID'],
          'aws_secret_access_key': os.environ['TARGET_S3_AWS_SECRET_ACCESS_KEY'],
