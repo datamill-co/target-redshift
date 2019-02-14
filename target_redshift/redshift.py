@@ -34,17 +34,18 @@ class RedshiftTarget(PostgresTarget):
 
     # https://docs.aws.amazon.com/redshift/latest/dg/r_names.html
     IDENTIFIER_FIELD_LENGTH = 127
-
+    DEFAULT_COLUMN_LENGTH = 1000
     MAX_VARCHAR = 65535
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, **kwargs):
+    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None, default_column_length=DEFAULT_COLUMN_LENGTH , **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
 
         self.s3 = s3
+        self.default_column_length = default_column_length
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level)
 
     def write_batch(self, stream_buffer):
@@ -96,7 +97,7 @@ class RedshiftTarget(PostgresTarget):
     def json_schema_to_sql_type(self, schema):
         psql_type = PostgresTarget.json_schema_to_sql_type(self, schema)
 
-        max_length = schema.get('maxLength', self.MAX_VARCHAR)
+        max_length = schema.get('maxLength', self.default_column_length)
         if max_length > self.MAX_VARCHAR:
             max_length = self.MAX_VARCHAR
 
