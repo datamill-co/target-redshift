@@ -76,7 +76,8 @@ here.
 | `invalid_records_threshold` | `["integer", "null"]` | `0` | Include a positive value `n` in your config to allow for `target-redshift` to encounter at most `n` invalid records per stream before giving up. |
 | `disable_collection` | `["string", "null"]` | `false` | Include `true` in your config to disable [Singer Usage Logging](#usage-logging). |
 | `logging_level` | `["string", "null"]` | `"INFO"` | The level for logging. Set to `DEBUG` to get things like queries executed, timing of those queries, etc. See [Python's Logger Levels](https://docs.python.org/3/library/logging.html#levels) for information about valid values. |
-|'default_column_length'| `["integer", "null"]` | `1000` | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535. |
+| `persist_empty_tables` | `["boolean", "null"]` | `False` | Whether the Target should create tables which have no records present in Remote.
+| `default_column_length` | `["integer", "null"]` | `1000` | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535. |
 | `target_s3` | `["object"]` | `N/A` | See `S3` below |
 
 #### S3 Config.json

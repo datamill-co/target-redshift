@@ -1,5 +1,11 @@
 # Changelog
 
+# 0.0.4
+
+- **FEATURES:**
+  - [Added the `persist_empty_tables`](https://github.com/datamill-co/target-postgres) config option detailed in Target-Postgres.
+
+
 # 0.0.3
 
 - **FEATURES:**
