@@ -1,9 +1,9 @@
 version: '2'
 services:
   target-redshift:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: python:3.7.1-stretch
+    working_dir: /code
+    entrypoint: /code/docker-entrypoint.sh
     environment:
       REDSHIFT_HOST: "${REDSHIFT_HOST}"
       REDSHIFT_DATABASE: "${REDSHIFT_DATABASE}"
