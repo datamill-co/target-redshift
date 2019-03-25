@@ -168,6 +168,8 @@ As soon as you see `INFO: Dev environment ready.` you can shell into the contain
 
 ```sh
 $ docker exec -it target-redshift_target-redshift_1 bash # Your container names might differ
+root@... $ source /code/venv--target-redshift/bin/activate
+root@... $ pytest
 ```
 
 See the [PyTest](#pytest) commands below!
