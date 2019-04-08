@@ -41,6 +41,7 @@ pip install target-redshift
      "redshift_username": "myuser",
      "redshift_password": "1234",
      "redshift_schema": "mytapname",
+     "default_column_length": 1000,
      "target_s3": {
        "aws_access_key_id": "AKIA...",
        "aws_secret_access_key": "supersecret",
@@ -63,28 +64,30 @@ pip install target-redshift
 The fields available to be specified in the config file are specified
 here.
 
-| Field | Type | Default | Details |
-| ----- | ---- | ------- | ------- |
-| `redshift_host` |`["string"]` | `N/A` | |
-| `redshift_port` | `["integer", "null"]`|  `5432` | |
-| `redshift_database` | `["string"]`|  `N/A` | |
-| `redshift_username` | `["string"]` |  `N/A` | |
-| `redshift_password` | `["string"]`|  `N/A` | |
-| `redshift_schema` | `["string", "null"]` |  `"public"` | |
-| `invalid_records_detect` | `["boolean", "null"]`| `true` | Include `false` in your config to disable `target-redshift` from crashing on invalid records |
-| `invalid_records_threshold` | `["integer", "null"]` | `0` | Include a positive value `n` in your config to allow for `target-redshift` to encounter at most `n` invalid records per stream before giving up. |
-| `disable_collection` | `["string", "null"]` | `false` | Include `true` in your config to disable [Singer Usage Logging](#usage-logging). |
-| `logging_level` | `["string", "null"]` | `"INFO"` | The level for logging. Set to `DEBUG` to get things like queries executed, timing of those queries, etc. See [Python's Logger Levels](https://docs.python.org/3/library/logging.html#levels) for information about valid values. |
-| `target_s3` | `["object"]` | `N/A` | See `S3` below |
+| Field                       | Type                  | Default    | Details                                                                                                                                                                                                                          |
+| --------------------------- | --------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `redshift_host`             | `["string"]`          | `N/A`      |                                                                                                                                                                                                                                  |
+| `redshift_port`             | `["integer", "null"]` | `5432`     |                                                                                                                                                                                                                                  |
+| `redshift_database`         | `["string"]`          | `N/A`      |                                                                                                                                                                                                                                  |
+| `redshift_username`         | `["string"]`          | `N/A`      |                                                                                                                                                                                                                                  |
+| `redshift_password`         | `["string"]`          | `N/A`      |                                                                                                                                                                                                                                  |
+| `redshift_schema`           | `["string", "null"]`  | `"public"` |                                                                                                                                                                                                                                  |
+| `invalid_records_detect`    | `["boolean", "null"]` | `true`     | Include `false` in your config to disable `target-redshift` from crashing on invalid records                                                                                                                                     |
+| `invalid_records_threshold` | `["integer", "null"]` | `0`        | Include a positive value `n` in your config to allow for `target-redshift` to encounter at most `n` invalid records per stream before giving up.                                                                                 |
+| `disable_collection`        | `["string", "null"]`  | `false`    | Include `true` in your config to disable [Singer Usage Logging](#usage-logging).                                                                                                                                                 |
+| `logging_level`             | `["string", "null"]`  | `"INFO"`   | The level for logging. Set to `DEBUG` to get things like queries executed, timing of those queries, etc. See [Python's Logger Levels](https://docs.python.org/3/library/logging.html#levels) for information about valid values. |
+| `persist_empty_tables`      | `["boolean", "null"]` | `False`    | Whether the Target should create tables which have no records present in Remote.                                                                                                                                                 |
+| `default_column_length`     | `["integer", "null"]` | `1000`     | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535.                                                                                                                                    |
+| `target_s3`                 | `["object"]`          | `N/A`      | See `S3` below                                                                                                                                                                                                                   |
 
 #### S3 Config.json
 
-| Field | Type | Default | Details |
-| ----- | ---- | ------- | ------- |
-| `aws_access_key_id` |`["string"]` | `N/A` | |
-| `aws_secret_access_key` |`["string"]` | `N/A` | |
-| `bucket` |`["string"]` | `N/A` | Bucket where staging files should be uploaded to. |
-| `key_prefix` |`["string", "null"]` | `""` | Prefix for staging file uploads to allow for better delineation of tmp files|
+| Field                   | Type                 | Default | Details                                                                      |
+| ----------------------- | -------------------- | ------- | ---------------------------------------------------------------------------- |
+| `aws_access_key_id`     | `["string"]`         | `N/A`   |                                                                              |
+| `aws_secret_access_key` | `["string"]`         | `N/A`   |                                                                              |
+| `bucket`                | `["string"]`         | `N/A`   | Bucket where staging files should be uploaded to.                            |
+| `key_prefix`            | `["string", "null"]` | `""`    | Prefix for staging file uploads to allow for better delineation of tmp files |
 
 ## Known Limitations
 
@@ -94,18 +97,18 @@ here.
   object, and array types with or without null are supported. Arrays can
   have any of the other types listed, including objects as types within
   items.
-    - Example of JSON Schema types that work
-        - `['number']`
-        - `['string']`
-        - `['string', 'null']`
-    - Exmaple of JSON Schema types that **DO NOT** work
-        - `['string', 'integer']`
-        - `['integer', 'number']`
-        - `['any']`
-        - `['null']`
+  - Example of JSON Schema types that work
+    - `['number']`
+    - `['string']`
+    - `['string', 'null']`
+  - Exmaple of JSON Schema types that **DO NOT** work
+    - `['string', 'integer']`
+    - `['integer', 'number']`
+    - `['any']`
+    - `['null']`
 - JSON Schema combinations such as `anyOf` and `allOf` are not supported.
-- JSON Schema $ref is partially supported:
-  - ***NOTE:*** The following limitations are known to **NOT** fail gracefully
+- JSON Schema \$ref is partially supported:
+  - **_NOTE:_** The following limitations are known to **NOT** fail gracefully
   - Presently you cannot have any circular or recursive `$ref`s
   - `$ref`s must be present within the schema:
     - URI's do not work
@@ -119,8 +122,8 @@ here.
 - Field/Column names are restricted to:
   - 127 characters in length
   - ASCII characters
-- Fields/Columns are ***ALL*** `nullable`
-- Fields/Columns use the default _largest_ type available for them
+- Fields/Columns are **_ALL_** `nullable`
+- Fields/Columns use a default of 1000 characters (in order to be able to work with a large number of columns).
 
 ## Usage Logging
 
@@ -149,6 +152,7 @@ REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
 REDSHIFT_PORT='<your-port>' # Probably 5439
 REDSHIFT_USERNAME='<your-user-name'
 REDSHIFT_PASSWORD='<your-password>'
+DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
 TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
 TARGET_S3_AWS_SECRET_ACCESS_KEY='<secret>'
 TARGET_S3_BUCKET='<bucket-string>'
@@ -164,6 +168,8 @@ As soon as you see `INFO: Dev environment ready.` you can shell into the contain
 
 ```sh
 $ docker exec -it target-redshift_target-redshift_1 bash # Your container names might differ
+root@... $ source /code/venv--target-redshift/bin/activate
+root@... $ pytest
 ```
 
 See the [PyTest](#pytest) commands below!
@@ -173,13 +179,14 @@ See the [PyTest](#pytest) commands below!
 To run the tests, you will need an _actual_ Redshift cluster running, and a user that either:
 
 - Has the ability to _create_ schemas therein
+
   - This is required if you wish to run multiple versions of the tests, similar
-  to how we run our [CI tests by varying the `REDSHIFT_SCHEMA` envvar](https://github.com/datamill-co/target-redshift/blob/master/.circleci/config.yml#L94-L96)
+    to how we run our [CI tests by varying the `REDSHIFT_SCHEMA` envvar](https://github.com/datamill-co/target-redshift/blob/master/.circleci/config.yml#L94-L96)
 
 - has access to the `public` schema
   - If the `REDSHIFT_SCHEMA` is seen to be the string `"public"`, the tests will ignore creating and dropping schemas
   - This setup is often preferred for situations in which `GRANT CREATE ON DATABASE db TO user;`
-  is viewed as too risky
+    is viewed as too risky
 
 Make sure to set the following env vars for [PyTest](#pytest):
 
@@ -190,6 +197,7 @@ $ EXPORT REDSHIFT_SCHEMA='<your-schema-name>' # Probably 'public'
 $ EXPORT REDSHIFT_PORT='<your-port>' # Probably 5439
 $ EXPORT REDSHIFT_USERNAME='<your-user-name'
 $ EXPORT REDSHIFT_PASSWORD='<your-password>' # Redshift requires passwords
+$ EXPORT DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
 ```
 
 ### S3
@@ -225,5 +233,6 @@ Target Redshift is sponsored by Data Mill (Data Mill Services, LLC) [datamill.co
 
 Data Mill helps organizations utilize modern data infrastructure and data science to power analytics, products, and services.
 
-------
+---
+
 Copyright Data Mill Services, LLC 2018

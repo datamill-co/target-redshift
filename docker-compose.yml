@@ -1,9 +1,9 @@
 version: '2'
 services:
   target-redshift:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
+    image: python:3.7.1-stretch
+    working_dir: /code
+    entrypoint: /code/docker-entrypoint.sh
     environment:
       REDSHIFT_HOST: "${REDSHIFT_HOST}"
       REDSHIFT_DATABASE: "${REDSHIFT_DATABASE}"
@@ -11,6 +11,7 @@ services:
       REDSHIFT_PORT: "${REDSHIFT_PORT}"
       REDSHIFT_USERNAME: "${REDSHIFT_USERNAME}"
       REDSHIFT_PASSWORD: "${REDSHIFT_PASSWORD}"
+      DEFAULT_COLUMN_LENGTH: "${DEFAULT_COLUMN_LENGTH}"
       TARGET_S3_AWS_ACCESS_KEY_ID: "${TARGET_S3_AWS_ACCESS_KEY_ID}"
       TARGET_S3_AWS_SECRET_ACCESS_KEY: "${TARGET_S3_AWS_SECRET_ACCESS_KEY}"
       TARGET_S3_BUCKET: "${TARGET_S3_BUCKET}"
