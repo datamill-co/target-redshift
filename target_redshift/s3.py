@@ -1,6 +1,7 @@
 import uuid
 
 import boto3
+import re
 
 SEPARATOR = '__'
 
@@ -47,5 +48,6 @@ class _EncodeBinaryReadable:
             line = self.input.read()
             if line == '':
                 return output
-            output += line.encode('utf-8')
+
+            output +=  re.sub(r'[^\x00-\x7f]', r'', line).encode('utf-8')
         return output
