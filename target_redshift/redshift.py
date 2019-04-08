@@ -38,15 +38,19 @@ class RedshiftTarget(PostgresTarget):
     MAX_VARCHAR = 65535
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
-
+    INVALID_CHAR_REPLACEMENT = '?'
+    
     def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None,
-                 default_column_length=DEFAULT_COLUMN_LENGTH, persist_empty_tables=False, **kwargs):
+                 default_column_length=DEFAULT_COLUMN_LENGTH, persist_empty_tables=False,
+                 accept_inv_characters = False, escape = False, **kwargs):
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
 
         self.s3 = s3
         self.default_column_length = default_column_length
+        self.accept_inv_characters = accept_inv_characters
+        self.escape = escape
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level,
                                 persist_empty_tables=persist_empty_tables)
 
@@ -122,8 +126,12 @@ class RedshiftTarget(PostgresTarget):
                                       key_prefix=key_prefix)
 
         credentials = self.s3.credentials()
-
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
+        additional_arguments = ''
+        if self.escape:
+            additional_arguments += sql.Literal(' ESCAPE')
+        if self.accept_inv_characters:
+            additional_arguments += sql.Literal(' ACCEPTINVCHARS AS {}'.format(self.INVALID_CHAR_REPLACEMENT))
+        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} {}').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
@@ -131,8 +139,10 @@ class RedshiftTarget(PostgresTarget):
             sql.Literal('aws_access_key_id={};aws_secret_access_key={}'.format(
                 credentials.get('aws_access_key_id'),
                 credentials.get('aws_secret_access_key'))),
-            sql.Literal(RESERVED_NULL_DEFAULT))
-
+            sql.Literal(RESERVED_NULL_DEFAULT),
+            sql.Literal(additional_arguments)
+            )
+        
         cur.execute(copy_sql)
 
         pattern = re.compile(SINGER_LEVEL.format('[0-9]+'))

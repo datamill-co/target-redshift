@@ -39,7 +39,9 @@ def main(config, input_stream=None):
             redshift_schema=config.get('redshift_schema', 'public'),
             logging_level=config.get('logging_level'),
             default_column_length=config.get('default_column_length', 1000),
-            persist_empty_tables=config.get('persist_empty_tables')
+            persist_empty_tables=config.get('persist_empty_tables'),
+            accept_inv_characters = config.get('accept_inv_chars', False),
+            escape = config.get('escape', False)
         )
 
         if input_stream:
@@ -49,6 +51,52 @@ def main(config, input_stream=None):
 
 
 def cli():
-    args = utils.parse_args(REQUIRED_CONFIG_KEYS)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        '-c', '--config',
+        help = 'Config file',
+        required = True)
+
+    parser.add_argument(
+        '-s', '--state',
+        help = 'State file')
+
+    parser.add_argument(
+        '-p', '--properties',
+        help = 'Property selections: DEPRECATED, Please use --catalog instead')
+
+    parser.add_argument(
+        '--catalog',
+        help = 'Catalog file')
+
+    parser.add_argument(
+        '-d', '--discover',
+        action = 'store_true',
+        help = 'Do schema discovery')
+
+    parser.add_argument(
+       '--accept_inv_chars',
+        action = 'store_true',
+        help = 'Accept invalid characters in the Redshift tables.')
+
+    parser.add_argument(
+        '--escape',
+        action = 'store_true',
+        help = 'Escape characters in the Redshift tables.')
+
+    args = parser.parse_args()
+    if args.config:
+        args.config = load_json(args.config)
+    if args.state:
+        args.state = load_json(args.state)
+    else:
+        args.state = {}
+    if args.properties:
+        args.properties = load_json(args.properties)
+    if args.catalog:
+        args.catalog = Catalog.load(args.catalog)
+
+    utils.check_config(args.config, required_config_keys)
 
     main(args.config)
