@@ -1,7 +1,7 @@
 version: '2'
 services:
   target-redshift:
-    image: python:3.7.1-stretch
+    image: python:3.7.3-stretch
     working_dir: /code
     entrypoint: /code/docker-entrypoint.sh
     environment:
