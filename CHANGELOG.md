@@ -1,5 +1,24 @@
 # Changelog
 
+# 0.0.8
+
+- **DEPENDENCIES:**
+  - [Singer Target Postgres](https://pypi.org/project/singer-target-postgres/)
+    from `0.1.8` to `0.1.9`.
+    - Addressed a bug with `ACTIVATE_VERSION` not clearing internal buffers. No _known_ issues arose from this, purely a performance issue
+    - Added emitting `STATE` messages when all associated `RECORD` messages have been persisted
+    - Added SSL support
+    - See [CHANGELOG](https://github.com/datamill-co/target-postgres/blob/master/CHANGELOG.md)
+      for more details.
+
+# 0.0.7
+
+- **DEPENDENCIES:**
+  - [Singer Target Postgres](https://pypi.org/project/singer-target-postgres/)
+    from `0.1.7` to `0.1.8`.
+    - See [CHANGELOG](https://github.com/datamill-co/target-postgres/blob/master/CHANGELOG.md)
+      for more details.
+
 # 0.0.6
 
 - **DEPENDENCIES:**
