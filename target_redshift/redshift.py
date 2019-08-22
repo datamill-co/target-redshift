@@ -66,7 +66,7 @@ class RedshiftTarget(PostgresTarget):
                                                   metadata,
                                                   log_schema_changes=log_schema_changes)
 
-    def add_table(self, cur, name, metadata):
+    def add_table(self, cur, path, name, metadata):
         self._validate_identifier(name)
 
         create_table_sql = sql.SQL('CREATE TABLE {}.{} ({} {})').format(
@@ -79,7 +79,9 @@ class RedshiftTarget(PostgresTarget):
         cur.execute(sql.SQL('{};').format(
             create_table_sql))
 
-        self._set_table_metadata(cur, name, {'version': metadata.get('version', None)})
+        self._set_table_metadata(cur, name, {'path': path,
+                                             'version': metadata.get('version', None),
+                                             'schema_version': metadata['schema_version']})
 
         self.add_column_mapping(cur,
                                 name,
