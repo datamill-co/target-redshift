@@ -64,7 +64,7 @@ jobs:
           command: |
             python -m venv venv--target-redshift
             source venv--target-redshift/bin/activate
-            python setup.py install
+            pip install -e .[tests]
             deactivate
 
       - save_cache:
@@ -102,7 +102,7 @@ jobs:
             ssh -4 -o "StrictHostKeyChecking no" -nNT -L 5439:$REDSHIFT_HOST:5439 ubuntu@$EC2_GATEWAY_BOX &
             export REDSHIFT_HOST=localhost
 
-            python setup.py pytest --verbose
+            pytest --verbose
           environment:
             REDSHIFT_PORT: 5439
             REDSHIFT_DATABASE: 'test_target_redshift'
