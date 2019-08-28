@@ -1,5 +1,14 @@
 # Changelog
 
+# 0.0.10
+
+- **DEPENDENCIES:**
+  - [Singer Target Postgres](https://pypi.org/project/singer-target-postgres/)
+    from `0.1.10` to `0.1.11`.
+    - No functional changes impacting `target-redshift`
+    - See [CHANGELOG](https://github.com/datamill-co/target-postgres/blob/master/CHANGELOG.md)
+      for more details.
+
 # 0.0.9
 
 - **DEPENDENCIES:**
