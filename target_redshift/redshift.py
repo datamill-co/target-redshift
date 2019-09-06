@@ -124,15 +124,20 @@ class RedshiftTarget(PostgresTarget):
                                       key_prefix=key_prefix)
 
         credentials = self.s3.credentials()
+        aws_access_key_id = credentials.get('aws_access_key_id')
+        aws_secret_access_key= credentials.get('aws_secret_access_key')
+        aws_session_token = credentials.get('aws_session_token')
 
         copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
             sql.Literal('s3://{}/{}'.format(bucket, key)),
-            sql.Literal('aws_access_key_id={};aws_secret_access_key={}'.format(
-                credentials.get('aws_access_key_id'),
-                credentials.get('aws_secret_access_key'))),
+            sql.Literal('aws_access_key_id={};aws_secret_access_key={}{}'.format(
+                aws_access_key_id,
+                aws_secret_access_key,
+                ";token={}".format(aws_session_token) if aws_session_token else '',
+            )),
             sql.Literal(RESERVED_NULL_DEFAULT))
 
         cur.execute(copy_sql)

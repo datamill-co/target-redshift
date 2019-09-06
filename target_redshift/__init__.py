@@ -31,7 +31,8 @@ def main(config, input_stream=None):
         s3 = S3(s3_config.get('aws_access_key_id'),
                 s3_config.get('aws_secret_access_key'),
                 s3_config.get('bucket'),
-                s3_config.get('key_prefix'))
+                s3_config.get('key_prefix'),
+                aws_session_token=s3_config.get('aws_session_token'))
 
         redshift_target = RedshiftTarget(
             connection,

@@ -86,6 +86,7 @@ here.
 | ----------------------- | -------------------- | ------- | ---------------------------------------------------------------------------- |
 | `aws_access_key_id`     | `["string"]`         | `N/A`   |                                                                              |
 | `aws_secret_access_key` | `["string"]`         | `N/A`   |                                                                              |
+| `aws_session_token`     | `["string"]`         | `N/A`   | STS session token if using temporary credentials                             |
 | `bucket`                | `["string"]`         | `N/A`   | Bucket where staging files should be uploaded to.                            |
 | `key_prefix`            | `["string", "null"]` | `""`    | Prefix for staging file uploads to allow for better delineation of tmp files |
 

@@ -6,13 +6,22 @@ SEPARATOR = '__'
 
 
 class S3:
-    def __init__(self, aws_access_key_id, aws_secret_access_key, bucket, key_prefix=''):
+    def __init__(
+        self,
+        aws_access_key_id,
+        aws_secret_access_key,
+        bucket,
+        key_prefix='',
+        aws_session_token=None
+    ):
         self._credentials = {'aws_access_key_id': aws_access_key_id,
-                             'aws_secret_access_key': aws_secret_access_key}
+                             'aws_secret_access_key': aws_secret_access_key,
+                             'aws_session_token': aws_session_token}
         self.client = boto3.client(
             's3',
             aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key)
+            aws_secret_access_key=aws_secret_access_key,
+            aws_session_token=aws_session_token)
         self.bucket = bucket
         self.key_prefix = key_prefix
 
