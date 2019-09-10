@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0
+
+- **NOTE:** The `minor` version bump is not expected to have much effect on folks. This was done to signal the
+  output change from the below dependency bump. It is our impression not many are using this feature yet anyways. Since
+  this was _not_ a `patch` change, we decided to make this a `minor` instead of `major` change to raise _less_
+  concern. Thank you for your patience! Please see the below dependency change for more information.
+- **DEPENDENCIES:**
+  - [Singer Target Postgres](https://pypi.org/project/singer-target-postgres/)
+    from `0.1.11` to `0.2.0`.
+    - Change of `STATE` message support to be better aligned with the official `singer-target-template`
+    - See [CHANGELOG](https://github.com/datamill-co/target-postgres/blob/master/CHANGELOG.md)
+      for more details.
+
 # 0.0.10
 
 - **DEPENDENCIES:**
