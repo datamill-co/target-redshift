@@ -95,6 +95,11 @@ class RedshiftTarget(PostgresTarget):
             if is_nullable:
                 return json_schema.make_nullable(schema)
             return schema
+        elif sql_type == 'timestamp without time zone':
+            schema = {'type': [json_schema.STRING], 'format': [json_schema.DATE_TIME_FORMAT]}
+            if is_nullable:
+                return json_schema.make_nullable(schema)
+            return schema
 
         return PostgresTarget.sql_type_to_json_schema(self, sql_type, is_nullable)
 
