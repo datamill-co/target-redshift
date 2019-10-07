@@ -20,8 +20,8 @@ setup(
     py_modules=['target_redshift'],
     install_requires=[
         'boto3>=1.9.205,<1.10.0',
-        'singer-target-postgres==0.2.0',
-        'urllib3==1.25.3'
+        'singer-target-postgres==0.2.1',
+        'urllib3==1.25.6'
     ],
     setup_requires=[
         "pytest-runner"
@@ -29,8 +29,8 @@ setup(
     extras_require={
         "tests": [
             "chance==0.110",
-            "Faker==1.0.8",
-            "pytest==4.6.5"
+            "Faker==2.0.2",
+            "pytest==5.2.1"
     ]},
     entry_points='''
       [console_scripts]

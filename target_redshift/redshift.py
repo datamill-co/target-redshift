@@ -39,8 +39,13 @@ class RedshiftTarget(PostgresTarget):
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
 
-    def __init__(self, connection, s3, *args, redshift_schema='public', logging_level=None,
-                 default_column_length=DEFAULT_COLUMN_LENGTH, persist_empty_tables=False, **kwargs):
+    def __init__(self, connection, s3, *args,
+        redshift_schema='public',
+        logging_level=None,
+        default_column_length=DEFAULT_COLUMN_LENGTH,
+        persist_empty_tables=False,
+        **kwargs):
+
         self.LOGGER.info(
             'RedshiftTarget created with established connection: `{}`, schema: `{}`'.format(connection.dsn,
                                                                                             redshift_schema))
@@ -48,7 +53,7 @@ class RedshiftTarget(PostgresTarget):
         self.s3 = s3
         self.default_column_length = default_column_length
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level,
-                                persist_empty_tables=persist_empty_tables)
+                                persist_empty_tables=persist_empty_tables, add_upsert_indexes=False)
 
     def write_batch(self, stream_buffer):
         # WARNING: Using mutability here as there's no simple way to copy the necessary data over

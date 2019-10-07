@@ -54,7 +54,7 @@ jobs:
   cache:
     working_directory: /code/
     docker:
-      - image: python:3.7.3-stretch
+      - image: python:3.7.4-stretch
     steps:
       - checkout
       - *restore__cache
@@ -81,7 +81,7 @@ jobs:
 
   test--redshift:
     docker:
-      - image: python:3.7.3-stretch
+      - image: python:3.7.4-stretch
     working_directory: /code/
     steps:
       - checkout
@@ -122,7 +122,7 @@ jobs:
   build:
     working_directory: /code/
     docker:
-      - image: python:3.7.3-stretch
+      - image: python:3.7.4-stretch
     steps:
       - checkout
       - *restore__cache
@@ -147,7 +147,7 @@ jobs:
   test-release:
     working_directory: /code/
     docker:
-      - image: python:3.7.3-stretch
+      - image: python:3.7.4-stretch
     steps:
       - checkout
       - *restore__cache
@@ -177,7 +177,7 @@ jobs:
   release:
     working_directory: /code/
     docker:
-      - image: python:3.7.3-stretch
+      - image: python:3.7.4-stretch
     steps:
       - checkout
       - *restore__cache
