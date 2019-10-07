@@ -12,7 +12,7 @@ setup(
     name='target-redshift',
     url='https://github.com/datamill-co/target-redshift',
     author='datamill',
-    version="0.2.0",
+    version="0.2.1",
     description='Singer.io target for loading data into redshift',
     long_description=long_description,
     long_description_content_type='text/markdown',
