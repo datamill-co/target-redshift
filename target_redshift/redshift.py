@@ -7,6 +7,7 @@ from target_postgres.postgres import PostgresError, PostgresTarget, RESERVED_NUL
 from target_postgres.singer_stream import (
     SINGER_LEVEL
 )
+import singer.metrics as metrics
 from target_postgres.sql_base import SEPARATOR
 
 
@@ -125,22 +126,23 @@ class RedshiftTarget(PostgresTarget):
                          csv_rows):
         key_prefix = temp_table_name + SEPARATOR
 
-        bucket, key = self.s3.persist(csv_rows,
-                                      key_prefix=key_prefix)
+        with self._set_timer_tags(metrics.job_timer(), 's3_persist', (remote_schema['name'],)):
+            bucket, key = self.s3.persist(csv_rows, key_prefix=key_prefix)
 
         credentials = self.s3.credentials()
 
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
-            sql.Identifier(self.postgres_schema),
-            sql.Identifier(temp_table_name),
-            sql.SQL(', ').join(map(sql.Identifier, columns)),
-            sql.Literal('s3://{}/{}'.format(bucket, key)),
-            sql.Literal('aws_access_key_id={};aws_secret_access_key={}'.format(
-                credentials.get('aws_access_key_id'),
-                credentials.get('aws_secret_access_key'))),
-            sql.Literal(RESERVED_NULL_DEFAULT))
+        with self._set_timer_tags(metrics.job_timer(), 's3_copy', (remote_schema['name'],)):
+            copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
+                sql.Identifier(self.postgres_schema),
+                sql.Identifier(temp_table_name),
+                sql.SQL(', ').join(map(sql.Identifier, columns)),
+                sql.Literal('s3://{}/{}'.format(bucket, key)),
+                sql.Literal('aws_access_key_id={};aws_secret_access_key={}'.format(
+                    credentials.get('aws_access_key_id'),
+                    credentials.get('aws_secret_access_key'))),
+                sql.Literal(RESERVED_NULL_DEFAULT))
 
-        cur.execute(copy_sql)
+            cur.execute(copy_sql)
 
         pattern = re.compile(SINGER_LEVEL.format('[0-9]+'))
         subkeys = list(filter(lambda header: re.match(pattern, header) is not None, columns))
