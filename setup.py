@@ -21,7 +21,8 @@ setup(
     install_requires=[
         'boto3>=1.9.205,<1.10.0',
         'singer-target-postgres==0.2.1',
-        'urllib3==1.25.6'
+        'urllib3==1.25.6',
+        'smart-open==1.9.0'
     ],
     setup_requires=[
         "pytest-runner"

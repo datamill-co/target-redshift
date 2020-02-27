@@ -1,5 +1,5 @@
 import uuid
-
+from smart_open import open
 import boto3
 
 SEPARATOR = '__'
@@ -9,10 +9,11 @@ class S3:
     def __init__(self, aws_access_key_id, aws_secret_access_key, bucket, key_prefix=''):
         self._credentials = {'aws_access_key_id': aws_access_key_id,
                              'aws_secret_access_key': aws_secret_access_key}
-        self.client = boto3.client(
-            's3',
+        self.session = boto3.Session(
             aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key)
+            aws_secret_access_key=aws_secret_access_key,
+        )
+        self.transport_params = {'session': self.session}
         self.bucket = bucket
         self.key_prefix = key_prefix
 
@@ -22,10 +23,8 @@ class S3:
     def persist(self, readable, key_prefix=''):
         key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '')
 
-        self.client.upload_fileobj(
-            _EncodeBinaryReadable(readable),
-            self.bucket,
-            key)
+        with open("s3://{}/{}".format(self.bucket, key), 'wb', transport_params=self.transport_params) as s3_fo:
+            s3_fo.write(readable.read())
 
         return [self.bucket, key]
 
