@@ -141,7 +141,7 @@ class RedshiftTarget(PostgresTarget):
                     credentials.get('aws_access_key_id'),
                     credentials.get('aws_secret_access_key'))),
                 sql.Literal(RESERVED_NULL_DEFAULT),
-                sql.Literal("GZIP")
+                "GZIP"
             )
 
             cur.execute(copy_sql)
