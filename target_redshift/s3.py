@@ -21,9 +21,9 @@ class S3:
         return self._credentials
 
     def persist(self, readable, key_prefix=''):
-        key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '')
+        key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '') + ".gz"
 
-        with open("s3://{}/{}".format(self.bucket, key), 'wb', transport_params=self.transport_params) as s3_fo:
+        with open("s3://{}/{}".format(self.bucket, key), 'w', transport_params=self.transport_params) as s3_fo:
             s3_fo.write(readable.read())
 
         return [self.bucket, key]
