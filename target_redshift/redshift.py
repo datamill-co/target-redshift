@@ -132,7 +132,7 @@ class RedshiftTarget(PostgresTarget):
         credentials = self.s3.credentials()
 
         with self._set_timer_tags(metrics.job_timer(), 's3_copy', (remote_schema['name'],)):
-            copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} {}').format(
+            copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} GZIP').format(
                 sql.Identifier(self.postgres_schema),
                 sql.Identifier(temp_table_name),
                 sql.SQL(', ').join(map(sql.Identifier, columns)),
@@ -141,7 +141,6 @@ class RedshiftTarget(PostgresTarget):
                     credentials.get('aws_access_key_id'),
                     credentials.get('aws_secret_access_key'))),
                 sql.Literal(RESERVED_NULL_DEFAULT),
-                "GZIP"
             )
 
             cur.execute(copy_sql)
