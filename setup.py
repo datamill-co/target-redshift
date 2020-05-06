@@ -12,7 +12,7 @@ setup(
     name='target-redshift',
     url='https://github.com/datamill-co/target-redshift',
     author='datamill',
-    version="0.2.1",
+    version="0.2.4",
     description='Singer.io target for loading data into redshift',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -20,8 +20,8 @@ setup(
     py_modules=['target_redshift'],
     install_requires=[
         'boto3>=1.9.205,<1.10.0',
-        'singer-target-postgres==0.2.1',
-        'urllib3==1.25.6'
+        'singer-target-postgres==0.2.4',
+        'urllib3==1.25.9'
     ],
     setup_requires=[
         "pytest-runner"
@@ -29,8 +29,8 @@ setup(
     extras_require={
         "tests": [
             "chance==0.110",
-            "Faker==2.0.2",
-            "pytest==5.2.1"
+            "Faker==4.0.3",
+            "pytest==5.4.1"
     ]},
     entry_points='''
       [console_scripts]

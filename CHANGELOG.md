@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.4
+
+- **NOTE:** The `patch` version bump is reflective of the underlying dependency bump from
+  [Target-Postgres](https://github.com/datamill-co/target-postgres) signal the
+- **DEPENDENCIES:**
+  - [Singer Target Postgres](https://pypi.org/project/singer-target-postgres/)
+    from `0.2.1` to `0.2.4`.
+    - Performance improvements, bug fixes, and feature support for JSONSchema `anyOf` and `allOf`
+    - See [CHANGELOG](https://github.com/datamill-co/target-postgres/blob/master/CHANGELOG.md)
+      for more details.
+
 ## 0.2.0
 
 - **NOTE:** The `minor` version bump is not expected to have much effect on folks. This was done to signal the
