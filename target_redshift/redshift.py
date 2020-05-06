@@ -24,6 +24,12 @@ def _make_schema_nullable(schema):
     for field in nullable_properties:
         nullable_properties[field] = json_schema.make_nullable(nullable_properties[field])
 
+        if 'anyOf' in nullable_properties[field]:
+            nullable_properties[field]['anyOf'] = [
+                json_schema.make_nullable(sub_schema)
+                for sub_schema in nullable_properties[field]['anyOf']
+            ]
+
     return nullable_schema
 
 
@@ -57,14 +63,20 @@ class RedshiftTarget(PostgresTarget):
 
     def write_batch(self, stream_buffer):
         # WARNING: Using mutability here as there's no simple way to copy the necessary data over
+        self.LOGGER.info('write_batch: Schema before nullability: {}'.format(stream_buffer.schema))
         nullable_stream_buffer = stream_buffer
         nullable_stream_buffer.schema = _make_schema_nullable(stream_buffer.schema)
+
+        self.LOGGER.info('write_batch: Schema after nullability: {}'.format(stream_buffer.schema))
 
         return PostgresTarget.write_batch(self, nullable_stream_buffer)
 
     def upsert_table_helper(self, connection, table_schema, metadata, log_schema_changes=True):
+        self.LOGGER.info('upsert_table_helper: Schema before nullability: {}'.format(table_schema))
+
         nullable_table_schema = deepcopy(table_schema)
         nullable_table_schema['schema'] = _make_schema_nullable(nullable_table_schema['schema'])
+        self.LOGGER.info('upsert_table_helper: Schema after nullability: {}'.format(nullable_table_schema))
         return PostgresTarget.upsert_table_helper(self,
                                                   connection,
                                                   nullable_table_schema,
@@ -106,16 +118,26 @@ class RedshiftTarget(PostgresTarget):
     def json_schema_to_sql_type(self, schema):
         psql_type = PostgresTarget.json_schema_to_sql_type(self, schema)
 
+        assert not 'NOT NULL' in psql_type, 'Redshift does not support `NOT NULL` without a default. Got: {}'.format(
+            psql_type,
+            schema
+        )
+
         max_length = schema.get('maxLength', self.default_column_length)
         if max_length > self.MAX_VARCHAR:
             max_length = self.MAX_VARCHAR
 
         if psql_type.upper() == 'TEXT':
             return 'varchar({})'.format(max_length)
-        elif psql_type.upper() == 'TEXT NOT NULL':
-            return 'varchar({}) NOT NULL'.format(max_length)
 
         return psql_type
+
+    def add_column(self, cur, table_name, column_name, column_schema):
+        self.LOGGER.info('add_column({}, {}, {})'.format(
+            table_name, column_name, column_schema
+        ))
+        PostgresTarget.add_column(self, cur, table_name, column_name, column_schema)
+
 
     def persist_csv_rows(self,
                          cur,
