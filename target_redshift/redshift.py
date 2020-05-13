@@ -155,7 +155,7 @@ class RedshiftTarget(PostgresTarget):
         aws_secret_access_key= credentials.get('aws_secret_access_key')
         aws_session_token = credentials.get('aws_session_token')
 
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
+        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} TRUNCATECOLUMNS').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
