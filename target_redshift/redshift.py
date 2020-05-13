@@ -51,7 +51,7 @@ class RedshiftTarget(PostgresTarget):
         logging_level=None,
         default_column_length=DEFAULT_COLUMN_LENGTH,
         persist_empty_tables=False,
-        truncate_columns=False
+        truncate_columns=False,
         **kwargs):
 
         self.LOGGER.info(
