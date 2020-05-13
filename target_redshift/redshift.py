@@ -44,12 +44,14 @@ class RedshiftTarget(PostgresTarget):
     MAX_VARCHAR = 65535
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
+    TRUNCATE_COLUMNS_LITERAL = 'TRUNCATECOLUMNS'
 
     def __init__(self, connection, s3, *args,
         redshift_schema='public',
         logging_level=None,
         default_column_length=DEFAULT_COLUMN_LENGTH,
         persist_empty_tables=False,
+        truncate_columns=False
         **kwargs):
 
         self.LOGGER.info(
@@ -58,6 +60,7 @@ class RedshiftTarget(PostgresTarget):
 
         self.s3 = s3
         self.default_column_length = default_column_length
+        self.truncate_columns = truncate_columns
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level,
                                 persist_empty_tables=persist_empty_tables, add_upsert_indexes=False)
 
@@ -155,7 +158,7 @@ class RedshiftTarget(PostgresTarget):
         aws_secret_access_key= credentials.get('aws_secret_access_key')
         aws_session_token = credentials.get('aws_session_token')
 
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} TRUNCATECOLUMNS').format(
+        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} {}').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
@@ -165,7 +168,8 @@ class RedshiftTarget(PostgresTarget):
                 aws_secret_access_key,
                 ";token={}".format(aws_session_token) if aws_session_token else '',
             )),
-            sql.Literal(RESERVED_NULL_DEFAULT))
+            sql.Literal(RESERVED_NULL_DEFAULT),
+            sql.Literal(self.TRUNCATE_COLUMNS_LITERAL) if self.truncate_columns else '')
 
         cur.execute(copy_sql)
 
