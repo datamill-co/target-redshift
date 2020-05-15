@@ -169,7 +169,7 @@ class RedshiftTarget(PostgresTarget):
                 ";token={}".format(aws_session_token) if aws_session_token else '',
             )),
             sql.Literal(RESERVED_NULL_DEFAULT),
-            sql.SQL(self.TRUNCATE_COLUMNS_LITERAL) if self.truncate_columns else '')
+            sql.SQL(self.TRUNCATE_COLUMNS_LITERAL if self.truncate_columns else ''))
 
         cur.execute(copy_sql)
 
