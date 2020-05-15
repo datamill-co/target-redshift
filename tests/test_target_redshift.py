@@ -727,16 +727,22 @@ def test_truncate_columns(db_prep):
             cur.execute(get_count_sql('cats'))
             table_count = cur.fetchone()[0]
 
-            cur.execute(sql.SQL('SELECT {} FROM {}.{}').format(
+            cur.execute(sql.SQL('SELECT {}, {} FROM {}.{}').format(
                 sql.SQL('MAX(LEN(description))'),
+                sql.SQL('MIN(LEN(description))'),
                 sql.Identifier(CONFIG['redshift_schema']),
                 sql.Identifier('cats')
             ))
 
-            max_length = cur.fetchone()[0]
+            result = cur.fetchone()
+            max_length = result[0]
+            min_length = result[1]
 
     # check if all records were inserted
     assert table_count == 100
 
-    # check if they were truncated properly. LongCats description is definitely longer
+    # check if they were truncated properly.
+    # LongCats' description is definitely longer than 1000 bytes,
+    # so it should always end up at exactly 1000
     assert max_length == CONFIG['default_column_length']
+    assert min_length == CONFIG['default_column_length']
