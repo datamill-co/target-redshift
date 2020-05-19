@@ -41,7 +41,7 @@ def main(config, input_stream=None):
             logging_level=config.get('logging_level'),
             default_column_length=config.get('default_column_length', 1000),
             persist_empty_tables=config.get('persist_empty_tables'),
-            truncate_columns=config.get('truncate_columns')
+            redshift_copy_options=config.get('redshift_copy_options')
         )
 
         if input_stream:

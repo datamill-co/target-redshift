@@ -717,7 +717,7 @@ def test_truncate_columns(db_prep):
     stream = LongCatStream(100, version=1, nested_count=2)
 
     # this is what we're testing for
-    CONFIG['truncate_columns'] = True
+    CONFIG['redshift_copy_options'] = ['TRUNCATECOLUMNS']
     CONFIG['default_column_length'] = 1000
 
     main(CONFIG, input_stream=stream)
