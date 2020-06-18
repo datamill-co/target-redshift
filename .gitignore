@@ -98,3 +98,6 @@ ENV/
 *.txt
 
 /venv--*
+*config.json
+*catalog.json
+.vscode/
