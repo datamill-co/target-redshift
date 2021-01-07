@@ -40,7 +40,8 @@ def main(config, input_stream=None):
             redshift_schema=config.get('redshift_schema', 'public'),
             logging_level=config.get('logging_level'),
             default_column_length=config.get('default_column_length', 1000),
-            persist_empty_tables=config.get('persist_empty_tables')
+            persist_empty_tables=config.get('persist_empty_tables'),
+            redshift_copy_options=config.get('redshift_copy_options')
         )
 
         if input_stream:

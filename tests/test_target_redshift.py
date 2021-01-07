@@ -6,7 +6,7 @@ from psycopg2 import sql
 import psycopg2.extras
 import pytest
 
-from fixtures import CatStream, CONFIG, db_prep, MultiTypeStream, NestedStream, TEST_DB
+from fixtures import CatStream, CONFIG, db_prep, MultiTypeStream, NestedStream, TEST_DB, LongCatStream
 from target_postgres import singer_stream
 from target_postgres.target_tools import TargetError
 
@@ -711,3 +711,38 @@ def test_deduplication_existing_new_rows(db_prep):
 
     assert len(sequences) == 1
     assert sequences[0][0] == original_sequence
+
+
+def test_truncate_columns(db_prep):
+    stream = LongCatStream(100, version=1, nested_count=2)
+
+    # this is what we're testing for
+    CONFIG['redshift_copy_options'] = ['TRUNCATECOLUMNS']
+    CONFIG['default_column_length'] = 1000
+
+    main(CONFIG, input_stream=stream)
+
+    with psycopg2.connect(**TEST_DB) as conn:
+        with conn.cursor() as cur:
+            cur.execute(get_count_sql('cats'))
+            table_count = cur.fetchone()[0]
+
+            cur.execute(sql.SQL('SELECT {}, {} FROM {}.{}').format(
+                sql.SQL('MAX(LEN(description))'),
+                sql.SQL('MIN(LEN(description))'),
+                sql.Identifier(CONFIG['redshift_schema']),
+                sql.Identifier('cats')
+            ))
+
+            result = cur.fetchone()
+            max_length = result[0]
+            min_length = result[1]
+
+    # check if all records were inserted
+    assert table_count == 100
+
+    # check if they were truncated properly.
+    # LongCats' description is definitely longer than 1000 bytes,
+    # so it should always end up at exactly 1000
+    assert max_length == CONFIG['default_column_length']
+    assert min_length == CONFIG['default_column_length']

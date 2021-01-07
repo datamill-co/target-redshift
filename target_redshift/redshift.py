@@ -50,6 +50,7 @@ class RedshiftTarget(PostgresTarget):
         logging_level=None,
         default_column_length=DEFAULT_COLUMN_LENGTH,
         persist_empty_tables=False,
+        redshift_copy_options=[],
         **kwargs):
 
         self.LOGGER.info(
@@ -58,6 +59,12 @@ class RedshiftTarget(PostgresTarget):
 
         self.s3 = s3
         self.default_column_length = default_column_length
+
+        if isinstance(redshift_copy_options, list):
+            self.redshift_copy_options = redshift_copy_options
+        else:
+            self.redshift_copy_options = []
+
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level,
                                 persist_empty_tables=persist_empty_tables, add_upsert_indexes=False)
 
@@ -155,7 +162,7 @@ class RedshiftTarget(PostgresTarget):
         aws_secret_access_key= credentials.get('aws_secret_access_key')
         aws_session_token = credentials.get('aws_session_token')
 
-        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {}').format(
+        copy_sql = sql.SQL('COPY {}.{} ({}) FROM {} CREDENTIALS {} FORMAT AS CSV NULL AS {} {}').format(
             sql.Identifier(self.postgres_schema),
             sql.Identifier(temp_table_name),
             sql.SQL(', ').join(map(sql.Identifier, columns)),
@@ -165,7 +172,8 @@ class RedshiftTarget(PostgresTarget):
                 aws_secret_access_key,
                 ";token={}".format(aws_session_token) if aws_session_token else '',
             )),
-            sql.Literal(RESERVED_NULL_DEFAULT))
+            sql.Literal(RESERVED_NULL_DEFAULT),
+            sql.SQL(' '.join(self.redshift_copy_options)))
 
         cur.execute(copy_sql)
 

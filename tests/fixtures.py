@@ -65,6 +65,9 @@ CATS_SCHEMA = {
             'age': {
                 'type': ['null', 'integer']
             },
+            'description': {
+                'type': ['null', 'string']
+            },
             'adoption': {
                 'type': ['object', 'null'],
                 'properties': {
@@ -215,6 +218,16 @@ class CatStream(FakeStream):
             'age': random.randint(1, 15),
             'adoption': adoption
         }
+
+
+class LongCatStream(CatStream):
+    def generate_record(self):
+        record = CatStream.generate_record(self)
+
+        # add some seriously long text
+        record['description'] = fake.paragraph(nb_sentences=1000)
+
+        return record
 
 
 class InvalidCatStream(CatStream):
