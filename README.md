@@ -82,7 +82,13 @@ here.
 | `persist_empty_tables`      | `["boolean", "null"]` | `False`    | Whether the Target should create tables which have no records present in Remote.                                                                                                                                                 |
 | `default_column_length`     | `["integer", "null"]` | `1000`     | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535.                                                                                                                                    |
 | `state_support`             | `["boolean", "null"]` | `True`                           | Whether the Target should emit `STATE` messages to stdout for further consumption. In this mode, which is on by default, STATE messages are buffered in memory until all the records that occurred before them are flushed according to the batch flushing schedule the target is configured with.    |
-| `target_s3`                 | `["object"]`          | `N/A`      | See `S3` below                                                                                                                                                                                                                   |
+| `target_s3`                 | `["object"]`          | `N/A`      | See `S3` below                                                                                                                                                                            
+| `use_ssh_tunnel`            | `["boolean", "null"]` | `False`    | Include `true` in your config to make the database connection through an SSH Tunnel
+| `ssh_jump_server`           | `["string", "null"]`  | `N/A`      | The hostname of your jump server, the one you want to tunnel through to get to the Redshift server
+| `ssh_jump_server_port`      | `["integer", "null"]` | `22`       | The port of your jump server, usually 22
+| `ssh_private_key_path`      | `["string", "null"]`  | `N/A`      | The local path to the SSH private key file
+| `ssh_private_key_password`  | `["string", "null"]`  | `N/A`      | The passphrase to your SSH private key file. Optional if your key file has no passphrase set
+| `ssh_username`              | `["string", "null"]`  | `N/A`      | The username to use to connect to the jump server
 
 #### S3 Config.json
 
