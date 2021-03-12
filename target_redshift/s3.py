@@ -29,7 +29,7 @@ class S3:
         return self._credentials
 
     def persist(self, readable, key_prefix=''):
-        key = self.key_prefix + key_prefix + str(uuid.uuid4()).replace('-', '')
+        key = self.key_prefix + (key_prefix or '') + str(uuid.uuid4()).replace('-', '')
 
         self.client.upload_fileobj(
             _EncodeBinaryReadable(readable),
