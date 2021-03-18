@@ -41,6 +41,8 @@ class RedshiftTarget(PostgresTarget):
     # https://docs.aws.amazon.com/redshift/latest/dg/r_names.html
     IDENTIFIER_FIELD_LENGTH = 127
     DEFAULT_COLUMN_LENGTH = 1000
+    DEFAULT_MAX_BYTES_PER_CHARACTER = 4
+
     MAX_VARCHAR = 65535
     CREATE_TABLE_INITIAL_COLUMN = '_sdc_target_redshift_create_table_placeholder'
     CREATE_TABLE_INITIAL_COLUMN_TYPE = 'BOOLEAN'
@@ -49,6 +51,7 @@ class RedshiftTarget(PostgresTarget):
         redshift_schema='public',
         logging_level=None,
         default_column_length=DEFAULT_COLUMN_LENGTH,
+        default_max_bytes_per_character=DEFAULT_MAX_BYTES_PER_CHARACTER,
         persist_empty_tables=False,
         **kwargs):
 
@@ -58,6 +61,7 @@ class RedshiftTarget(PostgresTarget):
 
         self.s3 = s3
         self.default_column_length = default_column_length
+        self.default_max_bytes_per_character = default_max_bytes_per_character
         PostgresTarget.__init__(self, connection, postgres_schema=redshift_schema, logging_level=logging_level,
                                 persist_empty_tables=persist_empty_tables, add_upsert_indexes=False)
 
@@ -123,7 +127,12 @@ class RedshiftTarget(PostgresTarget):
             schema
         )
 
-        max_length = schema.get('maxLength', self.default_column_length)
+        max_length = schema.get('maxLength')
+        if max_length = None:
+                max_length = self.default_column_length
+        else:
+            max_length *= self.default_max_bytes_per_character
+
         if max_length > self.MAX_VARCHAR:
             max_length = self.MAX_VARCHAR
 

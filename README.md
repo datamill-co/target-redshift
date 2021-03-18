@@ -42,6 +42,7 @@ pip install target-redshift
      "redshift_password": "1234",
      "redshift_schema": "mytapname",
      "default_column_length": 1000,
+     "default_max_bytes_per_character": 2,
      "target_s3": {
        "aws_access_key_id": "AKIA...",
        "aws_secret_access_key": "supersecret",
@@ -80,7 +81,8 @@ here.
 | `max_buffer_size`           | `["integer", "null"]` | `104857600` (100MB in bytes)     | The maximum number of bytes to buffer in memory before writing to the destination table in Redshift
 | `batch_detection_threshold` | `["integer", "null"]` | `5000`, or 1/40th `max_batch_rows` | How often, in rows received, to count the buffered rows and bytes to check if a flush is necessary. There's a slight performance penalty to checking the buffered records count or bytesize, so this controls how often this is polled in order to mitigate the penalty. This value is usually not necessary to set as the default is dynamically adjusted to check reasonably often.
 | `persist_empty_tables`      | `["boolean", "null"]` | `False`    | Whether the Target should create tables which have no records present in Remote.                                                                                                                                                 |
-| `default_column_length`     | `["integer", "null"]` | `1000`     | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length.Range: 1-65535.                                                                                                                                    |
+| `default_column_length`     | `["integer", "null"]` | `1000`     | All columns with the VARCHAR(CHARACTER VARYING) type will be have this length if no maxLength is declared in the schema. Range: 1-65535.                                                                                                                                    |
+| `default_max_bytes_per_character`     | `["integer", "null"]` | `4`     | Maximum number of bytes per character needed for encoding.  If incoming UTF-16 data has `maxLength: 100` and you set `default_max_bytes_per_character: 2` then the column will be defined as VARCHAR(200) to allow for enough storage. Range: 1-4.                                                                                                                                    |
 | `state_support`             | `["boolean", "null"]` | `True`                           | Whether the Target should emit `STATE` messages to stdout for further consumption. In this mode, which is on by default, STATE messages are buffered in memory until all the records that occurred before them are flushed according to the batch flushing schedule the target is configured with.    |
 | `target_s3`                 | `["object"]`          | `N/A`      | See `S3` below                                                                                                                                                                                                                   |
 
@@ -158,6 +160,7 @@ REDSHIFT_PORT='<your-port>' # Probably 5439
 REDSHIFT_USERNAME='<your-user-name'
 REDSHIFT_PASSWORD='<your-password>'
 DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
+DEFAULT_MAX_BYTES_PER_CHARACTER='<your-default-max-bytes-per-character>'
 TARGET_S3_AWS_ACCESS_KEY_ID='<AKIA...>'
 TARGET_S3_AWS_SECRET_ACCESS_KEY='<secret>'
 TARGET_S3_BUCKET='<bucket-string>'
@@ -203,6 +206,7 @@ $ EXPORT REDSHIFT_PORT='<your-port>' # Probably 5439
 $ EXPORT REDSHIFT_USERNAME='<your-user-name'
 $ EXPORT REDSHIFT_PASSWORD='<your-password>' # Redshift requires passwords
 $ EXPORT DEFAULT_COLUMN_LENGTH='<your-default-column-length>'
+$ EXPORT DEFAULT_MAX_BYTES_PER_CHARACTER='<your-default-max-bytes-per-character>' # Usually 1 or 2 for European languages
 ```
 
 ### S3

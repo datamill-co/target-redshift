@@ -40,6 +40,7 @@ def main(config, input_stream=None):
             redshift_schema=config.get('redshift_schema', 'public'),
             logging_level=config.get('logging_level'),
             default_column_length=config.get('default_column_length', 1000),
+            default_max_bytes_per_character=config.get('default_max_bytes_per_character', 4),
             persist_empty_tables=config.get('persist_empty_tables')
         )
 
