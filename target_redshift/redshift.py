@@ -129,7 +129,7 @@ class RedshiftTarget(PostgresTarget):
 
         max_length = schema.get('maxLength')
         if max_length is None:
-                max_length == self.default_column_length
+            max_length == self.default_column_length
         else:
             max_length *= self.default_max_bytes_per_character
 
