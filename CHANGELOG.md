@@ -1,5 +1,13 @@
 # Changelog
 
+# 0.2.5
+
+- **FEATURES:**
+  - [Added the `default_max_bytes_per_character`](https://github.com/datamill-co/target-redshift/pull/9) config option which allows users to declare a default maximum number of bytes to allow per incoming character.  For example, a field in the schema
+  declared with `maxLength: 100` with a `default_max_bytes_per_character: 2` will end up as a `varchar(200)` field.  Fields
+  with no `maxLength` declared will get `varchar(<default_column_length>)` as before.  `default_max_bytes_per_character` defaults to
+  `4` to allow for up to 4 byte UTF and avoid backwards-compatibility issues.
+
 ## 0.2.4
 
 - **NOTE:** The `patch` version bump is reflective of the underlying dependency bump from
